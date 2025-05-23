@@ -1,6 +1,6 @@
 # ALB (Application Load Balancer)
 resource "openstack_lb_loadbalancer_v2" "alb" {
-  name              = "${var.prefix}-alb-2"
+  name              = "${var.prefix}-alb"
   vip_subnet_id     = var.public_subnet_id
   admin_state_up    = true
   availability_zone = "kr-central-2-a"
