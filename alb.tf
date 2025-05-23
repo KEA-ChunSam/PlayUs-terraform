@@ -55,13 +55,14 @@ resource "openstack_lb_member_v2" "web" {
   depends_on = [openstack_lb_pool_v2.alb_web_pool]
 }
 
-resource "openstack_lb_member_v2" "k8s_master" {
-  pool_id       = openstack_lb_pool_v2.alb_web_pool.id
-  address       = openstack_networking_port_v2.k8s_master_port.all_fixed_ips[0]
-  protocol_port = 80
-  subnet_id     = var.private_subnet_id
-  depends_on    = [openstack_lb_pool_v2.alb_web_pool]
-}
+# k8s_master 멤버는 Pool에서 제외 (주석 처리 또는 삭제)
+# resource "openstack_lb_member_v2" "k8s_master" {
+#   pool_id       = openstack_lb_pool_v2.alb_web_pool.id
+#   address       = openstack_networking_port_v2.k8s_master_port.all_fixed_ips[0]
+#   protocol_port = 80
+#   subnet_id     = var.private_subnet_id
+#   depends_on    = [openstack_lb_pool_v2.alb_web_pool]
+# }
 
 # ALB Floating IP
 resource "openstack_networking_floatingip_v2" "alb_fip" {
