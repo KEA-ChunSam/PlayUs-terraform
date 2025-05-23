@@ -86,3 +86,5 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
+
+scripts/web-env.sh
