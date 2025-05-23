@@ -1,13 +1,13 @@
 # ALB (Application Load Balancer)
 resource "openstack_lb_loadbalancer_v2" "alb" {
-  name              = "${var.prefix}-alb"
+  name              = "${var.prefix}-alb-2"
   vip_subnet_id     = var.public_subnet_id
   admin_state_up    = true
   availability_zone = "kr-central-2-a"
   flavor_id         = "687c7076-7756-4906-9630-dd51abd6f1e7"  # ALB flavor ID
   
   timeouts {
-    create = "60m"
+    create = "90m"
   }
 }
 

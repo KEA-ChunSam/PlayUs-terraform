@@ -54,7 +54,7 @@ resource "openstack_networking_port_v2" "web_port" {
 # NAT용 포트 생성
 resource "openstack_networking_port_v2" "nat_port" {
   name           = "${var.prefix}-nat-port"
-  network_id     = data.openstack_networking_subnet_v2.public_subnet.network_id  # 수정됨
+  network_id     = data.openstack_networking_subnet_v2.public_subnet.network_id
   admin_state_up = true
 
   fixed_ip {

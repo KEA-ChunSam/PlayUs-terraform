@@ -68,25 +68,31 @@ variable "default_image_id" {
 variable "bastion_flavor" {
   description = "Bastion 인스턴스 flavor"
   type        = string
-  default     = "t1i.micro"
+  default     = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # t1i.micro (2vCPU, 1GB RAM)
+}
+
+variable "nat_flavor" {
+  description = "NAT 인스턴스 flavor"
+  type        = string
+  default     = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # t1i.micro (2vCPU, 1GB RAM)
 }
 
 variable "web_flavor" {
   description = "Web Server 인스턴스 flavor"
   type        = string
-  default     = "t1i.medium"
+  default     = "1a225644-8411-4277-b44a-00487d575620"  # t1i.medium (2vCPU, 4GB RAM)
 }
 
 variable "k8s_master_flavor" {
   description = "k8s 마스터 인스턴스 flavor"
   type        = string
-  default     = "t1i.medium"
+  default     = "1a225644-8411-4277-b44a-00487d575620"  # t1i.medium (2vCPU, 4GB RAM)
 }
 
 variable "k8s_slave_flavor" {
   description = "k8s 슬레이브 인스턴스 flavor"
   type        = string
-  default     = "t1i.medium"
+  default     = "1a225644-8411-4277-b44a-00487d575620"  # t1i.medium (2vCPU, 4GB RAM)
 }
 
 # ALB 설정

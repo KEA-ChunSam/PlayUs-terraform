@@ -43,7 +43,7 @@ resource "openstack_compute_instance_v2" "web" {
 resource "openstack_compute_instance_v2" "nat" {
   name        = "${var.prefix}-nat"
   image_id    = var.default_image_id
-  flavor_id   = "t1i.micro"
+  flavor_id   = var.nat_flavor
   key_pair    = var.ssh_key_name
   user_data   = file("${path.module}/scripts/init-nat.sh")
 
