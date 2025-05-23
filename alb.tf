@@ -63,15 +63,6 @@ resource "openstack_lb_member_v2" "k8s_master" {
   depends_on    = [openstack_lb_pool_v2.alb_web_pool]
 }
 
-resource "openstack_lb_member_v2" "k8s_slaves" {
-  count         = 2
-  pool_id       = openstack_lb_pool_v2.alb_web_pool.id
-  address       = element(openstack_networking_port_v2.k8s_slave_port.*.all_fixed_ips[0], count.index)
-  protocol_port = 80
-  subnet_id     = var.private_subnet_id
-  depends_on    = [openstack_lb_pool_v2.alb_web_pool]
-}
-
 # ALB Floating IP
 resource "openstack_networking_floatingip_v2" "alb_fip" {
   pool = data.openstack_networking_network_v2.floating_network.name
