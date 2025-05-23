@@ -103,6 +103,42 @@ resource "openstack_networking_secgroup_rule_v2" "alb_ingress_http" {
   security_group_id = openstack_networking_secgroup_v2.alb_sg.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "alb_sg_http" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.alb_sg.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "alb_sg_https" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 443
+  port_range_max    = 443
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.alb_sg.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "alb_sg_icmp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.alb_sg.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "alb_sg_egress" {
+  direction         = "egress"
+  ethertype         = "IPv4"
+  protocol          = null
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.alb_sg.id
+}
+
 resource "openstack_networking_secgroup_v2" "nat_sg" {
   name        = "${var.prefix}-nat-sg"
   description = "Security group for NAT instance"
@@ -176,5 +212,45 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_api" {
   port_range_min    = 6443
   port_range_max    = 6443
   remote_group_id   = openstack_networking_secgroup_v2.bastion_sg.id
+  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_80" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
+  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_443" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 443
+  port_range_max    = 443
+  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
+  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_8080" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8080
+  port_range_max    = 8080
+  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
+  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_6443" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 6443
+  port_range_max    = 6443
+  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
 }
