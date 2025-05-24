@@ -4,7 +4,7 @@ resource "openstack_lb_loadbalancer_v2" "alb" {
   vip_port_id       = openstack_networking_port_v2.alb_vip_port.id
   admin_state_up    = true
   availability_zone = "kr-central-2-a"
-  flavor_id         = "687c7076-7756-4906-9630-dd51abd6f1e7"  # ALB flavor ID
+  flavor_id         = var.alb.flavor_id
   
   timeouts {
     create = "90m"
@@ -15,7 +15,7 @@ resource "openstack_lb_loadbalancer_v2" "alb" {
 resource "openstack_lb_listener_v2" "alb_http" {
   name            = "${var.prefix}-alb-listener"
   protocol        = "HTTP"
-  protocol_port   = var.alb_listener_port
+  protocol_port   = var.alb.listener_port
   loadbalancer_id = openstack_lb_loadbalancer_v2.alb.id
 
   timeouts {
@@ -55,15 +55,6 @@ resource "openstack_lb_member_v2" "web" {
   depends_on = [openstack_lb_pool_v2.alb_web_pool]
 }
 
-# k8s_master 멤버는 Pool에서 제외 (주석 처리 또는 삭제)
-# resource "openstack_lb_member_v2" "k8s_master" {
-#   pool_id       = openstack_lb_pool_v2.alb_web_pool.id
-#   address       = openstack_networking_port_v2.k8s_master_port.all_fixed_ips[0]
-#   protocol_port = 80
-#   subnet_id     = var.private_subnet_id
-#   depends_on    = [openstack_lb_pool_v2.alb_web_pool]
-# }
-
 # ALB Floating IP
 resource "openstack_networking_floatingip_v2" "alb_fip" {
   pool = data.openstack_networking_network_v2.floating_network.name
@@ -78,16 +69,16 @@ resource "openstack_networking_floatingip_associate_v2" "alb_fip_assoc" {
 resource "openstack_lb_monitor_v2" "alb_web_monitor" {
   pool_id        = openstack_lb_pool_v2.alb_web_pool.id
   type           = "HTTP"
-  delay          = 5
-  timeout        = 3
-  max_retries    = 3
+  delay          = var.alb.health_check.delay
+  timeout        = var.alb.health_check.timeout
+  max_retries    = var.alb.health_check.max_retries
   http_method    = "GET"
-  url_path       = "/"
-  expected_codes = "200"
+  url_path       = var.alb.health_check.url_path
+  expected_codes = var.alb.health_check.expected_codes
   depends_on     = [openstack_lb_pool_v2.alb_web_pool]
 }
 
-# VIP 포트에 보안 그룹 할당
+# VIP 포트 생성
 resource "openstack_networking_port_v2" "alb_vip_port" {
   name           = "${var.prefix}-alb-vip-port"
   network_id     = var.public_subnet_network_id

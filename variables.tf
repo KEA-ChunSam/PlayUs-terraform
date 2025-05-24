@@ -50,6 +50,11 @@ variable "private_network_cidr" {
   type        = string
 }
 
+variable "router_id" {
+  description = "라우터 ID"
+  type        = string
+}
+
 # 리소스 이름 접두사
 variable "prefix" {
   description = "리소스 이름 접두사"
@@ -57,49 +62,97 @@ variable "prefix" {
   default     = "playus"
 }
 
-# 이미지 ID
-variable "default_image_id" {
-  description = "기본 OS 이미지 ID (Ubuntu 20.04)"
-  type        = string
-  default     = "044eae16-ecc2-4f74-9345-5a9fe90d80a9"
+# 인스턴스 타입 설정
+variable "instance_types" {
+  description = "인스턴스 타입 설정"
+  type = object({
+    bastion = object({
+      name = string
+      id   = string
+    })
+    nat = object({
+      name = string
+      id   = string
+    })
+    web = object({
+      name = string
+      id   = string
+    })
+    k8s_master = object({
+      name = string
+      id   = string
+    })
+    k8s_slave = object({
+      name = string
+      id   = string
+    })
+  })
+  default = {
+    bastion = {
+      name = "t1i.micro"
+      id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM
+    }
+    nat = {
+      name = "t1i.micro"
+      id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM
+    }
+    web = {
+      name = "t1i.medium"
+      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+    }
+    k8s_master = {
+      name = "t1i.medium"
+      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+    }
+    k8s_slave = {
+      name = "t1i.medium"
+      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+    }
+  }
 }
 
-# 인스턴스 설정
-variable "bastion_flavor" {
-  description = "Bastion 인스턴스 flavor"
-  type        = string
-  default     = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # t1i.micro (2vCPU, 1GB RAM)
-}
-
-variable "nat_flavor" {
-  description = "NAT 인스턴스 flavor"
-  type        = string
-  default     = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # t1i.micro (2vCPU, 1GB RAM)
-}
-
-variable "web_flavor" {
-  description = "Web Server 인스턴스 flavor"
-  type        = string
-  default     = "1a225644-8411-4277-b44a-00487d575620"  # t1i.medium (2vCPU, 4GB RAM)
-}
-
-variable "k8s_master_flavor" {
-  description = "k8s 마스터 인스턴스 flavor"
-  type        = string
-  default     = "1a225644-8411-4277-b44a-00487d575620"  # t1i.medium (2vCPU, 4GB RAM)
-}
-
-variable "k8s_slave_flavor" {
-  description = "k8s 슬레이브 인스턴스 flavor"
-  type        = string
-  default     = "1a225644-8411-4277-b44a-00487d575620"  # t1i.medium (2vCPU, 4GB RAM)
+# 이미지 설정
+variable "images" {
+  description = "OS 이미지 설정"
+  type = object({
+    ubuntu_20_04 = object({
+      name = string
+      id   = string
+    })
+  })
+  default = {
+    ubuntu_20_04 = {
+      name = "Ubuntu 20.04"
+      id   = "044eae16-ecc2-4f74-9345-5a9fe90d80a9"
+    }
+  }
 }
 
 # ALB 설정
-variable "alb_listener_port" {
-  description = "ALB 리스너 포트"
-  type        = number
-  default     = 80
+variable "alb" {
+  description = "ALB 설정"
+  type = object({
+    flavor_id = string
+    listener_port = number
+    health_check = object({
+      delay = number
+      timeout = number
+      max_retries = number
+      url_path = string
+      expected_codes = string
+    })
+  })
+  default = {
+    flavor_id = "687c7076-7756-4906-9630-dd51abd6f1e7"
+    listener_port = 80
+    health_check = {
+      delay = 10
+      timeout = 3
+      max_retries = 3
+      url_path = "/"
+      expected_codes = "200"
+    }
+  }
 }
 
 # S3 설정

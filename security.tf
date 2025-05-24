@@ -1,11 +1,21 @@
-# Bastion 서버용 보안 그룹 생성
-resource "openstack_networking_secgroup_v2" "bastion_sg" {
-  name        = "${var.prefix}-bastion-sg"
-  description = "Security group for Bastion"
+# 공통 보안 그룹 규칙
+locals {
+  common_egress_rule = {
+    direction         = "egress"
+    ethertype         = "IPv4"
+    protocol          = null
+    remote_ip_prefix  = "0.0.0.0/0"
+  }
 }
 
-# SSH 포트 허용 (Bastion IP에서만)
-resource "openstack_networking_secgroup_rule_v2" "bastion-ssh-sg-rule" {
+# Bastion 서버용 보안 그룹
+resource "openstack_networking_secgroup_v2" "bastion_sg" {
+  name        = "${var.prefix}-bastion-sg"
+  description = "Security group for Bastion server"
+}
+
+# Bastion 보안 그룹 규칙
+resource "openstack_networking_secgroup_rule_v2" "bastion_ssh" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
@@ -13,49 +23,37 @@ resource "openstack_networking_secgroup_rule_v2" "bastion-ssh-sg-rule" {
   port_range_max    = 22
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.bastion_sg.id
+  description       = "Allow SSH access from anywhere"
 }
 
-# 관리자 포트 허용 (Bastion IP에서만)
-resource "openstack_networking_secgroup_rule_v2" "bastion-admin-sg-rule" {
+resource "openstack_networking_secgroup_rule_v2" "bastion_icmp" {
   direction         = "ingress"
   ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 81
-  port_range_max    = 81
-  remote_ip_prefix  = "${openstack_networking_floatingip_v2.bastion_fip.address}/32"
-  security_group_id = openstack_networking_secgroup_v2.bastion_sg.id
-}
-
-# 프록시 포트 허용 (Bastion IP에서만)
-resource "openstack_networking_secgroup_rule_v2" "bastion-proxy-sg-rule" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 10000
-  port_range_max    = 10100
-  remote_ip_prefix  = "${openstack_networking_floatingip_v2.bastion_fip.address}/32"
-  security_group_id = openstack_networking_secgroup_v2.bastion_sg.id
-}
-
-# Bastion 아웃바운드 규칙 (필요한 서비스만 허용)
-resource "openstack_networking_secgroup_rule_v2" "bastion_egress" {
-  direction         = "egress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 80
-  port_range_max    = 443
+  protocol          = "icmp"
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.bastion_sg.id
+  description       = "Allow ICMP for network diagnostics"
 }
 
-# 웹 서버용 보안 그룹 생성
+resource "openstack_networking_secgroup_rule_v2" "bastion_egress" {
+  for_each = { "all" = local.common_egress_rule }
+  direction         = each.value.direction
+  ethertype         = each.value.ethertype
+  protocol          = each.value.protocol
+  remote_ip_prefix  = each.value.remote_ip_prefix
+  security_group_id = openstack_networking_secgroup_v2.bastion_sg.id
+  description       = "Allow all outbound traffic"
+}
+
+# 웹 서버용 보안 그룹
 resource "openstack_networking_secgroup_v2" "web_sg" {
   name        = "${var.prefix}-web-sg"
-  description = "Security group for ${var.prefix}-Server"
+  description = "Security group for Web server"
+  depends_on  = [openstack_networking_secgroup_v2.bastion_sg]
 }
 
-# Bastion 서버에서 웹 서버로 SSH 포트 허용
-resource "openstack_networking_secgroup_rule_v2" "web-sg-ssh" {
+# 웹 서버 보안 그룹 규칙
+resource "openstack_networking_secgroup_rule_v2" "web_ssh" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
@@ -63,69 +61,93 @@ resource "openstack_networking_secgroup_rule_v2" "web-sg-ssh" {
   port_range_max    = 22
   remote_group_id   = openstack_networking_secgroup_v2.bastion_sg.id
   security_group_id = openstack_networking_secgroup_v2.web_sg.id
+  description       = "Allow SSH access from Bastion server"
 }
 
-# ALB에서 웹 서버로 HTTP/HTTPS 접속 허용
-resource "openstack_networking_secgroup_rule_v2" "web-sg-public" {
+resource "openstack_networking_secgroup_rule_v2" "web_icmp" {
+  for_each = {
+    "bastion" = openstack_networking_secgroup_v2.bastion_sg.id
+    "alb"     = openstack_networking_secgroup_v2.alb_sg.id
+    "k8s"     = openstack_networking_secgroup_v2.k8s_sg.id
+  }
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_group_id   = each.value
+  security_group_id = openstack_networking_secgroup_v2.web_sg.id
+  description       = "Allow ICMP for network diagnostics from ${each.key}"
+  depends_on        = [
+    openstack_networking_secgroup_v2.web_sg,
+    openstack_networking_secgroup_v2.k8s_sg
+  ]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "web_http" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 80
-  port_range_max    = 443
+  port_range_max    = 80
   remote_group_id   = openstack_networking_secgroup_v2.alb_sg.id
   security_group_id = openstack_networking_secgroup_v2.web_sg.id
+  description       = "Allow HTTP access from ALB"
 }
 
-# Web 서버 아웃바운드 규칙 (필요한 서비스만 허용)
-resource "openstack_networking_secgroup_rule_v2" "web_sg_egress" {
-  direction         = "egress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 80
-  port_range_max    = 443
-  remote_ip_prefix  = "0.0.0.0/0"
+resource "openstack_networking_secgroup_rule_v2" "web_egress" {
+  for_each = { "all" = local.common_egress_rule }
+  direction         = each.value.direction
+  ethertype         = each.value.ethertype
+  protocol          = each.value.protocol
+  remote_ip_prefix  = each.value.remote_ip_prefix
   security_group_id = openstack_networking_secgroup_v2.web_sg.id
+  description       = "Allow all outbound traffic"
 }
 
+# ALB 보안 그룹
 resource "openstack_networking_secgroup_v2" "alb_sg" {
   name        = "${var.prefix}-alb-sg"
-  description = "ALB 보안 그룹"
+  description = "Security group for ALB"
 }
 
-# ALB HTTP/HTTPS 인바운드 규칙
-resource "openstack_networking_secgroup_rule_v2" "alb_ingress_http" {
+# ALB 보안 그룹 규칙
+resource "openstack_networking_secgroup_rule_v2" "alb_ingress" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 80
-  port_range_max    = 443
+  port_range_max    = 80
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.alb_sg.id
+  description       = "Allow HTTP access from anywhere"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "alb_sg_icmp" {
+resource "openstack_networking_secgroup_rule_v2" "alb_icmp" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "icmp"
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.alb_sg.id
+  description       = "Allow ICMP for network diagnostics"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "alb_sg_egress" {
-  direction         = "egress"
-  ethertype         = "IPv4"
-  protocol          = null
-  remote_ip_prefix  = "0.0.0.0/0"
+resource "openstack_networking_secgroup_rule_v2" "alb_egress" {
+  for_each = { "all" = local.common_egress_rule }
+  direction         = each.value.direction
+  ethertype         = each.value.ethertype
+  protocol          = each.value.protocol
+  remote_ip_prefix  = each.value.remote_ip_prefix
   security_group_id = openstack_networking_secgroup_v2.alb_sg.id
+  description       = "Allow all outbound traffic"
 }
 
+# NAT 인스턴스 보안 그룹
 resource "openstack_networking_secgroup_v2" "nat_sg" {
   name        = "${var.prefix}-nat-sg"
-  description = "Security group for NAT instance"
+  description = "Security group for NAT instance (SNAT only)"
 }
 
-# NAT 인스턴스 인바운드 규칙 (프라이빗 서브넷에서만)
-resource "openstack_networking_secgroup_rule_v2" "nat_sg_ingress" {
+# NAT 보안 그룹 규칙
+resource "openstack_networking_secgroup_rule_v2" "nat_ingress_private" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
@@ -133,25 +155,50 @@ resource "openstack_networking_secgroup_rule_v2" "nat_sg_ingress" {
   port_range_max    = 65535
   remote_ip_prefix  = var.private_network_cidr
   security_group_id = openstack_networking_secgroup_v2.nat_sg.id
+  description       = "Allow TCP traffic from private subnet for SNAT"
 }
 
-# NAT 인스턴스 아웃바운드 규칙 (HTTP/HTTPS만)
-resource "openstack_networking_secgroup_rule_v2" "nat_sg_egress" {
-  direction         = "egress"
+resource "openstack_networking_secgroup_rule_v2" "nat_ingress_private_udp" {
+  direction         = "ingress"
   ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 80
-  port_range_max    = 443
-  remote_ip_prefix  = "0.0.0.0/0"
+  protocol          = "udp"
+  port_range_min    = 1024
+  port_range_max    = 65535
+  remote_ip_prefix  = var.private_network_cidr
   security_group_id = openstack_networking_secgroup_v2.nat_sg.id
+  description       = "Allow UDP traffic from private subnet for SNAT"
 }
 
+resource "openstack_networking_secgroup_rule_v2" "nat_icmp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_ip_prefix  = var.private_network_cidr
+  security_group_id = openstack_networking_secgroup_v2.nat_sg.id
+  description       = "Allow ICMP for network diagnostics from private subnet"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "nat_egress" {
+  for_each = { "all" = local.common_egress_rule }
+  direction         = each.value.direction
+  ethertype         = each.value.ethertype
+  protocol          = each.value.protocol
+  remote_ip_prefix  = each.value.remote_ip_prefix
+  security_group_id = openstack_networking_secgroup_v2.nat_sg.id
+  description       = "Allow all outbound traffic for SNAT"
+}
+
+# Kubernetes 보안 그룹
 resource "openstack_networking_secgroup_v2" "k8s_sg" {
   name        = "${var.prefix}-k8s-sg"
-  description = "Security group for k8s nodes"
+  description = "Security group for Kubernetes nodes"
+  depends_on  = [
+    openstack_networking_secgroup_v2.bastion_sg,
+    openstack_networking_secgroup_v2.web_sg
+  ]
 }
 
-# Bastion에서 k8s 노드로 SSH 허용
+# Kubernetes 보안 그룹 규칙
 resource "openstack_networking_secgroup_rule_v2" "k8s_ssh" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -160,9 +207,27 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_ssh" {
   port_range_max    = 22
   remote_group_id   = openstack_networking_secgroup_v2.bastion_sg.id
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "Allow SSH access from Bastion server"
 }
 
-# k8s 노드간 필요한 포트만 허용
+resource "openstack_networking_secgroup_rule_v2" "k8s_icmp" {
+  for_each = {
+    "bastion" = openstack_networking_secgroup_v2.bastion_sg.id
+    "web"     = openstack_networking_secgroup_v2.web_sg.id
+    "k8s"     = openstack_networking_secgroup_v2.k8s_sg.id
+  }
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_group_id   = each.value
+  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "Allow ICMP for network diagnostics from ${each.key}"
+  depends_on        = [
+    openstack_networking_secgroup_v2.k8s_sg,
+    openstack_networking_secgroup_v2.web_sg
+  ]
+}
+
 resource "openstack_networking_secgroup_rule_v2" "k8s_internal" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -171,66 +236,47 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_internal" {
   port_range_max    = 65535
   remote_group_id   = openstack_networking_secgroup_v2.k8s_sg.id
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "Allow internal k8s node communication"
 }
 
-# k8s 노드의 아웃바운드 규칙 (필요한 서비스만)
-resource "openstack_networking_secgroup_rule_v2" "k8s_outbound" {
-  direction         = "egress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 80
-  port_range_max    = 443
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
-}
-
-# k8s API 서버 접근 규칙 (Bastion에서만)
 resource "openstack_networking_secgroup_rule_v2" "k8s_api" {
+  for_each = {
+    "bastion" = openstack_networking_secgroup_v2.bastion_sg.id
+    "web"     = openstack_networking_secgroup_v2.web_sg.id
+  }
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 6443
   port_range_max    = 6443
-  remote_group_id   = openstack_networking_secgroup_v2.bastion_sg.id
+  remote_group_id   = each.value
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "Allow k8s API access from ${each.key} server"
+  depends_on        = [openstack_networking_secgroup_v2.k8s_sg]
 }
 
-resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_80" {
+resource "openstack_networking_secgroup_rule_v2" "k8s_nodeport" {
+  for_each = {
+    "web" = openstack_networking_secgroup_v2.web_sg.id
+    "k8s" = openstack_networking_secgroup_v2.k8s_sg.id
+  }
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 80
-  port_range_max    = 80
-  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_group_id   = each.value
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "Allow NodePort access from ${each.key}"
+  depends_on        = [openstack_networking_secgroup_v2.k8s_sg]
 }
 
-resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_443" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 443
-  port_range_max    = 443
-  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
+resource "openstack_networking_secgroup_rule_v2" "k8s_egress" {
+  for_each = { "all" = local.common_egress_rule }
+  direction         = each.value.direction
+  ethertype         = each.value.ethertype
+  protocol          = each.value.protocol
+  remote_ip_prefix  = each.value.remote_ip_prefix
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_8080" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 8080
-  port_range_max    = 8080
-  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
-  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "k8s_from_web_6443" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 6443
-  port_range_max    = 6443
-  remote_group_id   = openstack_networking_secgroup_v2.web_sg.id
-  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "Allow all outbound traffic"
 }

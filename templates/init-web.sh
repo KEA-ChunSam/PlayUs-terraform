@@ -5,9 +5,12 @@ sudo apt-get update
 sudo apt-get install -y git curl
 
 # Node.js 18.x LTS 설치
-if ! command -v node >/dev/null 2>&1 || [[ $(node -v) != v18* ]]; then
+NODE_VERSION=$(node -v 2>/dev/null || echo "none")
+if [ "$NODE_VERSION" = "none" ] || [[ ! "$NODE_VERSION" =~ ^v18\. ]]; then
+  echo "Node.js 18.x 설치 중..."
   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
   sudo apt-get install -y nodejs
+  echo "Node.js $(node -v) 설치 완료"
 fi
 
 # nginx 설치
