@@ -24,6 +24,12 @@ variable "ssh_key_name" {
   type        = string
 }
 
+variable "environment" {
+  description = "배포 환경 (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+}
+
 # 네트워크 설정
 variable "public_subnet_id" {
   description = "퍼블릭 서브넷 ID"
@@ -42,6 +48,11 @@ variable "public_network_cidr" {
 
 variable "private_subnet_id" {
   description = "프라이빗 서브넷 ID"
+  type        = string
+}
+
+variable "private_subnet_cidr" {
+  description = "프라이빗 서브넷 CIDR"
   type        = string
 }
 

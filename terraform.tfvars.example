@@ -1,0 +1,24 @@
+# 기본 설정
+region  = "kr-central-2"
+auth_url = "https://iam.kakaocloud.com/identity/v3"
+
+# 카카오 클라우드 IAM Application Credential
+application_credential_id = "your-application-credential-id"
+application_credential_secret = "your-application-credential-secret"
+
+# SSH 키페어 이름 (카카오 클라우드 콘솔에서 생성한 키페어 이름)
+ssh_key_name = "your-ssh-key-name"
+environment = "dev"
+
+# 네트워크 설정 (카카오 클라우드 콘솔에서 확인)
+public_subnet_id            = "your-public-subnet-id"
+public_subnet_network_id    = "your-public-network-id"
+public_network_cidr         = "10.10.0.0/20"
+
+private_subnet_id        = "your-private-subnet-id"
+private_subnet_cidr      = "10.10.16.0/20"
+private_network_cidr     = "10.10.16.0/20"
+router_id               = "your-router-id"
+
+# 리소스 이름 접두사 (선택사항)
+# prefix = "playus" 

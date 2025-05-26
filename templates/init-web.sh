@@ -207,6 +207,19 @@ server {
         proxy_send_timeout 300;
     }
 
+    # FastAPI 프록시 (외부 Python 애플리케이션용)
+    location /fastapi {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+    }
+
     # 헬스 체크 엔드포인트
     location /health {
         access_log off;
