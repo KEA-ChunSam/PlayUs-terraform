@@ -88,3 +88,6 @@ Desktop.ini
 .env.*.local
 
 scripts/web-env.sh
+
+# 임시 파일입니다 무시해주세요
+.github/
