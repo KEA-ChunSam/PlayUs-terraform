@@ -51,11 +51,6 @@ variable "private_subnet_id" {
   type        = string
 }
 
-variable "private_subnet_cidr" {
-  description = "프라이빗 서브넷 CIDR"
-  type        = string
-}
-
 variable "private_network_cidr" {
   description = "프라이빗 네트워크 CIDR"
   type        = string
@@ -172,3 +167,5 @@ variable "s3_bucket_name" {
   type        = string
   default     = "playus-private-bucket"
 }
+
+

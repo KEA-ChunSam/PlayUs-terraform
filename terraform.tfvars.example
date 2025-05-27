@@ -16,7 +16,6 @@ public_subnet_network_id    = "your-public-network-id"
 public_network_cidr         = "10.10.0.0/20"
 
 private_subnet_id        = "your-private-subnet-id"
-private_subnet_cidr      = "10.10.16.0/20"
 private_network_cidr     = "10.10.16.0/20"
 router_id               = "your-router-id"
 

@@ -31,3 +31,14 @@ output "k8s_master_private_ip" {
 output "k8s_slave_private_ips" {
   value = [for p in openstack_networking_port_v2.k8s_slave_port : p.all_fixed_ips[0]]
 }
+
+# 접속 정보
+output "access_info" {
+  description = "서비스 접속 정보"
+  value = {
+    web_app = "http://${openstack_networking_floatingip_v2.alb_fip.address}"
+    bastion_ssh = "ssh ubuntu@${openstack_networking_floatingip_v2.bastion_fip.address}"
+    web_ssh = "ssh -p 10000 ubuntu@${openstack_networking_floatingip_v2.bastion_fip.address}"
+    k8s_master_ssh = "ssh -p 10001 ubuntu@${openstack_networking_floatingip_v2.bastion_fip.address}"
+  }
+}

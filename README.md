@@ -58,7 +58,9 @@ Internet
     |
    ALB (Application Load Balancer)
     |
-Web Server (React App + FastAPI:8000)
+Web Server (React App + Nginx Proxy)
+    |-- /fastapi → External FastAPI Server
+    |-- /api → K8s Cluster (NodePort:30080)
     |
 Bastion Host (Nginx Proxy Manager)
     |-- Port 10000 → Web Server:22
@@ -74,7 +76,7 @@ k8s Master ← k8s Slave1, k8s Slave2
 ### 주요 컴포넌트
 
 - **Bastion Host**: SSH 터널링 및 Nginx Proxy Manager (포트 포워딩)
-- **Web Server**: React 애플리케이션 + FastAPI 서버 (포트 8000)
+- **Web Server**: React 애플리케이션 + Nginx 프록시 (외부 FastAPI 연결)
 - **ALB**: 로드 밸런서 (HTTP/HTTPS/API)
 - **k8s Cluster**: 마스터 1개, 슬레이브 2개 (containerd 런타임)
 - **NAT Gateway**: 프라이빗 서브넷 아웃바운드 인터넷 접근
@@ -88,8 +90,11 @@ k8s Master ← k8s Slave1, k8s Slave2
 | Bastion | 80, 443, 81 | 0.0.0.0/0 | Nginx Proxy Manager |
 | Web | 22 | Bastion SG | SSH (Bastion을 통해서만) |
 | Web | 80 | ALB SG | HTTP (ALB를 통해서만) |
-| Web | 8000 | 0.0.0.0/0 | FastAPI (외부 Python 앱) |
-| ALB | 80, 443, 8080 | 0.0.0.0/0 | 웹 서비스 |
+| Web | 8000 | ALB SG | FastAPI 프록시 (ALB를 통해서만) |
+| Web | 8080 | K8s SG | Backend API (K8s에서만) |
+| ALB | 80, 443 | 0.0.0.0/0 | 웹 서비스 |
+| ALB | 8000 | 0.0.0.0/0 | FastAPI 프록시 서비스 |
+| K8s | 30080 | Web SG | NodePort API 서비스 |
 
 
 ## 📦 배포 방법
@@ -137,17 +142,29 @@ ssh -p 10002 ubuntu@<bastion_public_ip>
 ssh -p 10003 ubuntu@<bastion_public_ip>
 ```
 
-### FastAPI 통신
+### 외부 FastAPI 통신
 
 ```python
-# 외부 Python 애플리케이션에서 FastAPI 접근
+# 웹 서버를 통한 외부 FastAPI 접근
 import requests
 
-# 직접 접근 (보안 그룹에서 8000번 포트 허용)
-response = requests.get("http://<web_server_public_ip>:8000/api/endpoint")
+# ALB 8000번 포트를 통한 직접 접근 (권장 방법)
+response = requests.get("http://<alb_ip>:8000/api/data")
 
-# Nginx 프록시를 통한 접근
-response = requests.get("http://<alb_ip>/fastapi/api/endpoint")
+# Nginx 프록시를 통한 접근 (80번 포트)
+response = requests.get("http://<alb_ip>/fastapi/api/data")
+
+# 직접 외부 FastAPI 서버 접근
+response = requests.get("https://your-external-fastapi-server.com/api/data")
+
+# 예시: ALB 8000번 포트를 통한 데이터 조회
+data_response = requests.get("http://<alb_ip>:8000/api/data")
+print(data_response.json())
+
+# 예시: ALB 8000번 포트를 통한 데이터 전송
+post_data = {"key": "value", "message": "Hello from ALB proxy"}
+post_response = requests.post("http://<alb_ip>:8000/api/data", json=post_data)
+print(post_response.json())
 ```
 
 ### 포트 매핑
@@ -164,10 +181,13 @@ response = requests.get("http://<alb_ip>/fastapi/api/endpoint")
 
 ### 헬스 체크 엔드포인트
 
-- **내부**: `http://localhost/health`
-- **외부**: `http://<alb_ip>/health`
+- **웹 애플리케이션**: `http://<alb_ip>/health`
+- **외부 FastAPI (직접)**: `http://<alb_ip>:8000/health`
+- **외부 FastAPI (프록시)**: `http://<alb_ip>/fastapi/health`
+- **Backend API**: `http://<alb_ip>/api/health` (K8s로 프록시)
 - **버전 정보**: `http://<alb_ip>/version.json`
-- **FastAPI**: `http://<web_server_ip>:8000/docs`
+- **외부 FastAPI 문서**: `http://<alb_ip>:8000/docs`
+- **외부 FastAPI OpenAPI**: `http://<alb_ip>:8000/openapi.json`
 
 ### 로그 확인
 
@@ -243,12 +263,9 @@ sudo docker logs nginx-proxy-manager_app_1
 sudo journalctl -xe
 ```
 
-
-
-
 ### 보안 고려사항
 
 - SSH 접근은 Bastion Host를 통해서만 가능
 - 포트 포워딩을 통한 내부 서버 접근
 - 보안 그룹을 통한 네트워크 레벨 접근 제어
-- FastAPI는 필요한 경우에만 외부 노출
+- 외부 FastAPI는 웹 서버 프록시를 통해서만 접근
