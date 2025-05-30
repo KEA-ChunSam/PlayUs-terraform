@@ -61,14 +61,13 @@ variable "router_id" {
   type        = string
 }
 
-# 리소스 이름 접두사
 variable "prefix" {
   description = "리소스 이름 접두사"
   type        = string
   default     = "playus"
 }
 
-# 인스턴스 타입 설정
+# 인스턴스 타입 설정 
 variable "instance_types" {
   description = "인스턴스 타입 설정"
   type = object({
@@ -94,13 +93,36 @@ variable "instance_types" {
     })
   })
   default = {
+    # 기존 설정 (주석 처리)
+    # bastion = {
+    #   name = "t1i.medium"
+    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+    # }
+    # nat = {
+    #   name = "t1i.micro"
+    #   id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM
+    # }
+    # web = {
+    #   name = "t1i.medium"
+    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+    # }
+    # k8s_master = {
+    #   name = "t1i.medium"
+    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+    # }
+    # k8s_slave = {
+    #   name = "t1i.medium"
+    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+    # }
+    
+    # 최적화 설정 (개발환경용)
     bastion = {
-      name = "t1i.micro"
-      id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM
+      name = "t1i.medium"
+      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM 
     }
     nat = {
       name = "t1i.micro"
-      id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM
+      id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM 
     }
     web = {
       name = "t1i.medium"
@@ -108,11 +130,11 @@ variable "instance_types" {
     }
     k8s_master = {
       name = "t1i.medium"
-      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM 
     }
     k8s_slave = {
       name = "t1i.medium"
-      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM 
     }
   }
 }
@@ -121,20 +143,26 @@ variable "instance_types" {
 variable "images" {
   description = "OS 이미지 설정"
   type = object({
-    ubuntu_20_04 = object({
+    ubuntu_22_04 = object({
       name = string
       id   = string
     })
   })
   default = {
-    ubuntu_20_04 = {
-      name = "Ubuntu 20.04"
-      id   = "044eae16-ecc2-4f74-9345-5a9fe90d80a9"
+    ubuntu_22_04 = {
+      name = "Ubuntu 22.04"
+      id   = "07b05fb9-e0e4-4713-b699-5a492ebc7890"
     }
   }
 }
 
-# ALB 설정
+# ALB VIP 포트 ID (보안을 위해 변수로 관리)
+# variable "alb_vip_port_id" {
+#   description = "ALB VIP 포트 ID"
+#   type        = string
+#   sensitive   = true
+# }
+
 variable "alb" {
   description = "ALB 설정"
   type = object({
@@ -150,7 +178,7 @@ variable "alb" {
   })
   default = {
     flavor_id = "687c7076-7756-4906-9630-dd51abd6f1e7"
-    listener_port = 80
+    listener_port = 80 
     health_check = {
       delay = 10
       timeout = 3
@@ -167,5 +195,3 @@ variable "s3_bucket_name" {
   type        = string
   default     = "playus-private-bucket"
 }
-
-

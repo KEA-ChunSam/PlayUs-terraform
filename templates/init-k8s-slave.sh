@@ -1,52 +1,48 @@
 #!/bin/bash
 
 # 로그 설정
-exec > >(tee /var/log/user-data.log) 2>&1
+exec > >(tee /var/log/k8s-worker-init.log) 2>&1
 
-echo "Starting k8s slave initialization"
+echo "[INFO] Starting Kubernetes worker initialization"
 
 # 시스템 업데이트
-apt-get update
-apt-get upgrade -y
+apt-get update && apt-get upgrade -y
 
-# 컨테이너 런타임 설치 
+# containerd 설치 및 설정
 apt-get install -y containerd
-systemctl enable containerd
-systemctl start containerd
-
-# containerd 설정
 mkdir -p /etc/containerd
-containerd config default > /etc/containerd/config.toml
-
-# SystemdCgroup 사용 설정 
+containerd config default | tee /etc/containerd/config.toml >/dev/null
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-
 systemctl restart containerd
+systemctl enable containerd
 
-# Kubernetes 설치를 위한 사전 준비
-apt-get install -y apt-transport-https ca-certificates curl
+# 필요한 패키지 설치
+apt-get install -y apt-transport-https ca-certificates curl gpg
 
-# Kubernetes 저장소 키 추가
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+# Kubernetes 저장소 등록 (v1.30 기준 최신)
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | \
+  gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-# Kubernetes 저장소 추가
-echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
+  https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | \
+  tee /etc/apt/sources.list.d/kubernetes.list
 
-# 패키지 목록 업데이트
 apt-get update
-
-# Kubernetes 도구 설치 
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 
 # 스왑 비활성화
 swapoff -a
-sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+sed -i '/ swap / s/^/#/' /etc/fstab
 
-# 시스템 설정
-echo 'net.bridge.bridge-nf-call-iptables = 1' >> /etc/sysctl.conf
-echo 'net.bridge.bridge-nf-call-ip6tables = 1' >> /etc/sysctl.conf
+# 커널 설정
+cat <<EOF | tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+EOF
 sysctl --system
 
-echo "k8s slave initialization completed"
-echo "Ready for kubeadm join command" 
+echo "[INFO] Kubernetes worker initialization completed."
+echo "[INFO] Ready to join the cluster using: sudo kubeadm join ..."

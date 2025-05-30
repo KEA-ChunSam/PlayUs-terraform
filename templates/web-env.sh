@@ -1,6 +1,3 @@
-#!/bin/bash
-
-# 웹 서버 환경 변수 설정
 export ALB_VIP="${APP_ENDPOINT}"
 export REACT_APP_API_URL="${APP_ENDPOINT}"
 export K8S_MASTER_IP="${K8S_MASTER_IP}"
@@ -8,8 +5,7 @@ export K8S_API_ENDPOINT="http://${K8S_MASTER_IP}:30080"
 export NODE_ENV="production"
 export DEPLOY_VERSION="terraform_init"
 
-# 환경 변수를 파일로 저장
-cat > /tmp/web-env << 'EOF'
+cat > /tmp/web-env <<EOF
 ALB_VIP=${APP_ENDPOINT}
 REACT_APP_API_URL=${APP_ENDPOINT}
 K8S_MASTER_IP=${K8S_MASTER_IP}
@@ -17,13 +13,3 @@ K8S_API_ENDPOINT=http://${K8S_MASTER_IP}:30080
 NODE_ENV=production
 DEPLOY_VERSION=terraform_init
 EOF
-
-# 환경 변수 로드 함수
-load_web_env() {
-    if [ -f /tmp/web-env ]; then
-        source /tmp/web-env
-    fi
-}
-
-# 환경 변수 로드
-load_web_env 

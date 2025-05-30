@@ -142,16 +142,16 @@ resource "openstack_networking_secgroup_rule_v2" "web_http_from_alb" {
   description              = "HTTP access from ALB"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "web_k8s_api" {
-  direction                = "ingress"
-  ethertype                = "IPv4"
-  protocol                 = "tcp"
-  port_range_min           = 8080
-  port_range_max           = 8080
-  remote_group_id          = openstack_networking_secgroup_v2.k8s_sg.id
-  security_group_id        = openstack_networking_secgroup_v2.web_sg.id
-  description              = "Backend API access from K8s cluster"
-}
+# resource "openstack_networking_secgroup_rule_v2" "web_k8s_api" {
+#   direction                = "ingress"
+#   ethertype                = "IPv4"
+#   protocol                 = "tcp"
+#   port_range_min           = 8080
+#   port_range_max           = 8080
+#   remote_group_id          = openstack_networking_secgroup_v2.k8s_sg.id
+#   security_group_id        = openstack_networking_secgroup_v2.web_sg.id
+#   description              = "Backend API access from K8s cluster"
+# }
 
 resource "openstack_networking_secgroup_rule_v2" "web_egress" {
   for_each = { "all" = local.common_egress_rule }
@@ -209,29 +209,6 @@ resource "openstack_networking_secgroup_rule_v2" "alb_egress" {
   remote_ip_prefix  = each.value.remote_ip_prefix
   security_group_id = openstack_networking_secgroup_v2.alb_sg.id
   description       = "Allow all outbound traffic"
-}
-
-resource "openstack_networking_secgroup_rule_v2" "alb_fastapi" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 8000
-  port_range_max    = 8000
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.alb_sg.id
-  description       = "FastAPI access to ALB"
-}
-
-# 웹 서버 보안 그룹 규칙
-resource "openstack_networking_secgroup_rule_v2" "web_fastapi_from_alb" {
-  direction                = "ingress"
-  ethertype                = "IPv4"
-  protocol                 = "tcp"
-  port_range_min           = 8000
-  port_range_max           = 8000
-  remote_group_id          = openstack_networking_secgroup_v2.alb_sg.id
-  security_group_id        = openstack_networking_secgroup_v2.web_sg.id
-  description              = "FastAPI access from ALB"
 }
 
 # NAT 인스턴스 보안 그룹
@@ -311,6 +288,18 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_icmp" {
   ]
 }
 
+# Kong Ingress - HTTP 허용
+resource "openstack_networking_secgroup_rule_v2" "kong_http" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "Allow HTTP traffic to Kong Ingress"
+}
+
 resource "openstack_networking_secgroup_rule_v2" "k8s_internal" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -335,22 +324,6 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_api" {
   remote_group_id   = each.value
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
   description       = "Allow k8s API access from ${each.key} server"
-  depends_on        = [openstack_networking_secgroup_v2.k8s_sg]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "k8s_nodeport" {
-  for_each = {
-    "web" = openstack_networking_secgroup_v2.web_sg.id
-    "k8s" = openstack_networking_secgroup_v2.k8s_sg.id
-  }
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 30000
-  port_range_max    = 32767
-  remote_group_id   = each.value
-  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
-  description       = "Allow NodePort access from ${each.key}"
   depends_on        = [openstack_networking_secgroup_v2.k8s_sg]
 }
 

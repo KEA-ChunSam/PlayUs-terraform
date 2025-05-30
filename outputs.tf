@@ -6,6 +6,10 @@ output "nat_floating_ip" {
   value = openstack_networking_floatingip_v2.nat_fip.address
 }
 
+output "web_server_private_ip" {
+  value = openstack_networking_port_v2.web_port.all_fixed_ips[0]
+}
+
 output "web_private_ip" {
   value = openstack_networking_port_v2.web_port.all_fixed_ips[0]
 }

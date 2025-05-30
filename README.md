@@ -2,38 +2,11 @@
 
 카카오 클라우드에서 PlayUs 애플리케이션을 위한 인프라를 구축하는 Terraform Repository입니다.
 
-## 🏗️ 인프라 아키텍처
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Public Subnet                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   Bastion   │  │     NAT     │  │          ALB            │  │
-│  │   Server    │  │  Gateway    │  │  ┌─────────┬─────────┐  │  │
-│  │             │  │             │  │  │Port 80  │Port 8000│  │  │
-│  │ Port Fwd:   │  │             │  │  │Web App  │FastAPI  │  │  │
-│  │ 10000-10003 │  │             │  │  └─────────┴─────────┘  │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-┌─────────────────────────────────────────────────────────────────┐
-│                       Private Subnet                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┬─────────────┐│
-│  │ Web Server  │  │ K8s Master  │  │K8s Slave 1  │K8s Slave 2  ││
-│  │             │  │             │  │             │             ││
-│  │ - Nginx     │  │ - API Server│  │ - Worker    │ - Worker    ││
-│  │ - React App │  │ - etcd      │  │ - Pods      │ - Pods      ││
-│  │             │  │ - Scheduler │  │             │             ││
-│  └─────────────┘  └─────────────┘  └─────────────┴─────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-```
-
 ## 📋 구성 요소
 
 ### 🌐 네트워크
 - **Public Subnet**: Bastion, NAT Gateway, ALB
 - **Private Subnet**: Web Server, Kubernetes Cluster
-- **Security Groups**: 각 서비스별 최소 권한 원칙 적용
 
 ### 🖥️ 서버 인스턴스
 - **Bastion Server**: SSH 접근 및 포트 포워딩 (Nginx Proxy Manager)
@@ -42,7 +15,7 @@
 - **Kubernetes Cluster**: Master 1대 + Worker 2대
 
 ### ⚖️ Load Balancer
-- **ALB**: 80번 포트(웹앱), 8000번 포트(FastAPI)
+- **ALB**: 80번 포트
 - **Health Check**: 자동 헬스 체크 및 장애 조치
 
 ## 🚀 배포 가이드
@@ -68,7 +41,7 @@ wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.
 
 ```bash
 # 저장소 클론
-git clone <repository-url>
+git clone https://github.com/KEA-ChunSam/PlayUs-terraform.git
 cd PlayUs-terraform
 
 # 설정 파일 복사 및 수정
@@ -78,25 +51,32 @@ cp terraform.tfvars.example terraform.tfvars
 #### terraform.tfvars 설정
 ```hcl
 # 기본 설정
+# 기본 설정
 region  = "kr-central-2"
 auth_url = "https://iam.kakaocloud.com/identity/v3"
 
-# IAM Credential (카카오 클라우드 콘솔에서 생성)
-application_credential_id = "your-credential-id"
-application_credential_secret = "your-credential-secret"
+# 카카오 클라우드 IAM Application Credential
+application_credential_id = "your-application-credential-id"
+application_credential_secret = "your-application-credential-secret"
 
-# SSH 키페어 (카카오 클라우드 콘솔에서 생성한 키 이름)
+# SSH 키페어 이름
 ssh_key_name = "your-ssh-key-name"
 environment = "dev"
 
 # 네트워크 설정 (카카오 클라우드 콘솔에서 확인)
-public_subnet_id            = "your-public-subnet-id"
-public_subnet_network_id    = "your-public-network-id"
-public_network_cidr         = "10.10.0.0/20"
+public_subnet_id = "your-public-subnet-id"
+public_subnet_network_id = "your-public-network-id"
+public_network_cidr = "10.10.0.0/20"
 
-private_subnet_id        = "your-private-subnet-id"
-private_network_cidr     = "10.10.16.0/20"
-router_id               = "your-router-id"
+private_subnet_id = "your-private-subnet-id"
+private_network_cidr = "10.10.16.0/20"
+router_id = "your-router-id"
+
+# ALB VIP 포트 ID
+alb_vip_port_id = "your-alb-vip-port-id"
+
+# 리소스 이름 접두사 (선택사항)
+# prefix = "playus" 
 ```
 
 ### 3. 인프라 배포
@@ -108,7 +88,7 @@ terraform init
 # 배포 계획 확인
 terraform plan
 
-# 인프라 배포 (약 10-15분 소요)
+# 인프라 배포 (약 90분 소요)
 terraform apply
 ```
 
@@ -126,16 +106,16 @@ terraform output
 # Bastion 서버 직접 접속
 ssh ubuntu@<bastion-floating-ip>
 
-# 웹 서버 접속 (포트 포워딩)
+# 웹 서버 접속 
 ssh -p 10000 ubuntu@<bastion-floating-ip>
 
 # K8s Master 접속
 ssh -p 10001 ubuntu@<bastion-floating-ip>
 
-# K8s Slave 1 접속
+# K8s Worker Node 1 접속
 ssh -p 10002 ubuntu@<bastion-floating-ip>
 
-# K8s Slave 2 접속
+# K8s Worker Node 2 접속
 ssh -p 10003 ubuntu@<bastion-floating-ip>
 ```
 
@@ -144,72 +124,70 @@ ssh -p 10003 ubuntu@<bastion-floating-ip>
 # React 웹 애플리케이션
 http://<alb-floating-ip>
 
-# FastAPI 서버
-http://<alb-floating-ip>:8000
-
 # Bastion Nginx Proxy Manager (관리용)
 http://<bastion-floating-ip>:81
 ```
 
-## 🔧 CI/CD 설정
-
-### GitHub Actions 설정
-1. GitHub 저장소의 Settings > Secrets에 다음 값들 추가:
-
-```yaml
-# 필수 Secrets
-BASTION_HOST: <bastion-floating-ip>
-BASTION_USER: ubuntu
-BASTION_KEY: <private-key-content>
-REACT_DEVELOP_JSON: <react-env-variables-json>
-SLACK_WEBHOOK_URL: <slack-webhook-url> (선택사항)
-APP_URL: http://<alb-floating-ip> (선택사항)
-```
-
-2. React 환경 변수 JSON 예시:
-```json
-{
-  "REACT_APP_API_URL": "http://your-alb-ip",
-  "REACT_APP_PROFANITY_DETECT_API_BASE": "http://your-alb-ip:8000/detect",
-  "NODE_ENV": "development"
-}
-```
-
-### 자동 배포
-- `develop` 브랜치에 push 시 자동 배포
-- 빌드 → 테스트 → 배포 → 헬스체크 → 알림
-
 ## 🛡️ 보안 그룹 구성
 
-### Bastion Server
-- **인바운드**: SSH(22), HTTP(80), HTTPS(443), Admin(81), Port Forwarding(10000-10003)
-- **아웃바운드**: 모든 트래픽
+### Bastion Server (`playus-bastion-sg`)
 
-### Web Server
-- **인바운드**: SSH(Bastion), HTTP(ALB), FastAPI(ALB), K8s API(8080)
-- **아웃바운드**: 모든 트래픽
+| 방향       | 프로토콜/포트         | 출발지           | 설명                                      |
+|------------|------------------------|------------------|-------------------------------------------|
+| 인바운드   | TCP 22                 | 0.0.0.0/0        | SSH 접속 허용                             |
+| 인바운드   | TCP 80                 | 0.0.0.0/0        | Nginx Proxy Manager - HTTP 접속           |
+| 인바운드   | TCP 443                | 0.0.0.0/0        | Nginx Proxy Manager - HTTPS 접속          |
+| 인바운드   | TCP 81                 | 0.0.0.0/0        | Nginx Proxy Manager - 관리자 페이지 접속   |
+| 인바운드   | TCP 10000–10003        | 0.0.0.0/0        | 내부 서버 포트 포워딩 (Web, K8s 등)       |
+| 인바운드   | ICMP                   | 0.0.0.0/0        | Ping 테스트 허용                          |
+| 아웃바운드 | All                    | 0.0.0.0/0        | 모든 외부 통신 허용                       |
 
-### ALB
-- **인바운드**: HTTP(80), HTTPS(443), FastAPI(8000)
-- **아웃바운드**: 모든 트래픽
+---
 
-### Kubernetes Cluster
-- **인바운드**: SSH(Bastion), API(6443), NodePort(30000-32767), 내부 통신
-- **아웃바운드**: 모든 트래픽
+### Web Server (`playus-web-sg`)
 
-### NAT Gateway
-- **인바운드**: SSH(Bastion), Private 서브넷 모든 트래픽
-- **아웃바운드**: 모든 트래픽
+| 방향       | 프로토콜/포트         | 출발지             | 설명                                       |
+|------------|------------------------|--------------------|--------------------------------------------|
+| 인바운드   | TCP 22                 | Bastion SG         | Bastion → Web SSH 접속                    |
+| 인바운드   | TCP 80                 | ALB SG             | ALB → Web HTTP 요청 허용                  |
+| 인바운드   | ICMP                   | Bastion, ALB, K8s SG | 네트워크 진단용 Ping 허용                 |
+| 아웃바운드 | All                    | 0.0.0.0/0          | 외부 API 호출 포함 모든 트래픽 허용       |
 
-## 📊 리소스 사양
+---
 
-| 서버 | 인스턴스 타입 | vCPU | RAM | 디스크 |
-|------|---------------|------|-----|--------|
-| Bastion | t1i.micro | 2 | 1GB | 20GB |
-| Web | t1i.medium | 2 | 4GB | 20GB |
-| NAT | t1i.micro | 2 | 1GB | 20GB |
-| K8s Master | t1i.medium | 2 | 4GB | 20GB |
-| K8s Slave | t1i.medium | 2 | 4GB | 20GB |
+### Application Load Balancer (`playus-alb-sg`)
+
+| 방향       | 프로토콜/포트         | 출발지    | 설명                                |
+|------------|------------------------|-----------|-------------------------------------|
+| 인바운드   | TCP 80                 | 0.0.0.0/0 | 외부 HTTP 요청 허용                 |
+| 인바운드   | TCP 443                | 0.0.0.0/0 | 외부 HTTPS 요청 허용                |
+| 인바운드   | ICMP                   | 0.0.0.0/0 | 네트워크 상태 진단용 Ping 허용      |
+| 아웃바운드 | All                    | 0.0.0.0/0 | 백엔드 대상에 대한 모든 트래픽 허용 |
+
+---
+
+### Kubernetes Cluster (`playus-k8s-sg`)
+
+| 방향       | 프로토콜/포트         | 출발지             | 설명                                           |
+|------------|------------------------|--------------------|------------------------------------------------|
+| 인바운드   | TCP 22                 | Bastion SG         | Bastion → K8s SSH                             |
+| 인바운드   | TCP 6443               | Bastion, Web SG    | K8s API Server 접근 허용                      |
+| 인바운드   | TCP 80                 | 0.0.0.0/0          | Kong Ingress LoadBalancer용 HTTP 요청 허용   |
+| 인바운드   | TCP 1024–65535         | K8s SG             | K8s 노드 간 내부 통신                         |
+| 인바운드   | ICMP                   | Bastion, Web, K8s SG | 네트워크 상태 진단용 Ping 허용               |
+| 아웃바운드 | All                    | 0.0.0.0/0          | Pod, Kong, DNS 등 외부 통신 허용             |
+
+> ❌ NodePort(30000–32767) 규칙은 현재 Terraform에 **포함되지 않음** — 필요 시 추가 가능
+
+---
+
+### NAT Gateway (`playus-nat-sg`)
+
+| 방향       | 프로토콜/포트         | 출발지              | 설명                                  |
+|------------|------------------------|---------------------|---------------------------------------|
+| 인바운드   | TCP 22                 | Bastion SG          | Bastion → NAT SSH                     |
+| 인바운드   | All                    | Private CIDR 대역   | 사설망 → NAT 경유 트래픽 허용        |
+| 아웃바운드 | All                    | 0.0.0.0/0           | NAT를 통한 외부 인터넷 통신 허용     |
 
 ## 🔄 운영 가이드
 
@@ -231,16 +209,6 @@ ssh -p 10000 ubuntu@<bastion-ip> 'sudo tail -f /var/log/nginx/access.log'
 ssh -p 10000 ubuntu@<bastion-ip> 'sudo journalctl -f'
 ```
 
-### 모니터링
-```bash
-# 서버 상태 확인
-ssh -p 10000 ubuntu@<bastion-ip> 'systemctl status nginx'
-
-# ALB 헬스 체크 확인
-curl -I http://<alb-floating-ip>/
-curl -I http://<alb-floating-ip>:8000/health
-```
-
 ## 🧹 정리
 
 ### 인프라 삭제
@@ -251,38 +219,3 @@ terraform destroy
 # 특정 리소스만 삭제
 terraform destroy -target=resource_type.resource_name
 ```
-
-### 주의사항
-- 삭제 전 중요 데이터 백업 필수
-- S3 버킷 내용은 수동으로 삭제 필요
-- Floating IP는 별도로 해제 필요할 수 있음
-
-## 🐛 트러블슈팅
-
-### 일반적인 문제들
-
-#### 1. Terraform 초기화 실패
-```bash
-# 캐시 삭제 후 재시도
-rm -rf .terraform
-terraform init
-```
-
-#### 2. 인스턴스 생성 실패
-- 할당량 확인: 카카오 클라우드 콘솔에서 리소스 할당량 확인
-- 이미지 ID 확인: 최신 Ubuntu 20.04 이미지 ID 확인
-
-#### 3. 네트워크 연결 문제
-- 보안 그룹 규칙 확인
-- 라우팅 테이블 확인
-- NAT Gateway 상태 확인
-
-#### 4. 배포 실패
-```bash
-# SSH 연결 테스트
-ssh -p 10000 ubuntu@<bastion-ip> 'echo "Connection OK"'
-
-# Nginx 상태 확인
-ssh -p 10000 ubuntu@<bastion-ip> 'sudo systemctl status nginx'
-```
-

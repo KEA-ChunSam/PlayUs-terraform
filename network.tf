@@ -75,7 +75,6 @@ resource "openstack_networking_port_v2" "k8s_master_port" {
   }
 }
 
-# 웹 서버용 포트 생성
 resource "openstack_networking_port_v2" "web_port" {
   name               = "${var.prefix}-web-port"
   network_id         = data.openstack_networking_subnet_v2.private_subnet.network_id

@@ -6,18 +6,21 @@ auth_url = "https://iam.kakaocloud.com/identity/v3"
 application_credential_id = "your-application-credential-id"
 application_credential_secret = "your-application-credential-secret"
 
-# SSH 키페어 이름 (카카오 클라우드 콘솔에서 생성한 키페어 이름)
+# SSH 키페어 이름
 ssh_key_name = "your-ssh-key-name"
 environment = "dev"
 
 # 네트워크 설정 (카카오 클라우드 콘솔에서 확인)
-public_subnet_id            = "your-public-subnet-id"
-public_subnet_network_id    = "your-public-network-id"
-public_network_cidr         = "10.10.0.0/20"
+public_subnet_id = "your-public-subnet-id"
+public_subnet_network_id = "your-public-network-id"
+public_network_cidr = "10.10.0.0/20"
 
-private_subnet_id        = "your-private-subnet-id"
-private_network_cidr     = "10.10.16.0/20"
-router_id               = "your-router-id"
+private_subnet_id = "your-private-subnet-id"
+private_network_cidr = "10.10.16.0/20"
+router_id = "your-router-id"
+
+# ALB VIP 포트 ID
+alb_vip_port_id = "your-alb-vip-port-id"
 
 # 리소스 이름 접두사 (선택사항)
 # prefix = "playus" 
