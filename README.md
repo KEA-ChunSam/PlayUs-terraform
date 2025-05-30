@@ -1,43 +1,51 @@
-# PlayUs Terraform Infrastructure
+## PlayUs Terraform Infrastructure
 
 카카오 클라우드에서 PlayUs 애플리케이션을 위한 인프라를 구축하는 Terraform Repository입니다.
 
-## 📋 구성 요소
+<br>
 
-### 🌐 네트워크
-- **Public Subnet**: Bastion, NAT Gateway, ALB
+### 📋 구성 요소
+
+#### 네트워크
+- **Public Subnet**: Bastion, NAT 인스턴스, ALB
 - **Private Subnet**: Web Server, Kubernetes Cluster
 
-### 🖥️ 서버 인스턴스
+#### 서버 인스턴스
 - **Bastion Server**: SSH 접근 및 포트 포워딩 (Nginx Proxy Manager)
-- **Web Server**: React 앱
-- **NAT Gateway**: Private 서브넷 아웃바운드 트래픽
+- **NAT 인스턴스**: Private 서브넷 아웃바운드 트래픽
+- **Web Server**: React
 - **Kubernetes Cluster**: Master 1대 + Worker 2대
 
-### ⚖️ Load Balancer
+#### Load Balancer
 - **ALB**: 80번 포트
-- **Health Check**: 자동 헬스 체크 및 장애 조치
 
-## 🚀 배포 가이드
+```
+사용자 → ALB → /* (정적파일) → 웹서버 
+        └─→ /api/* (API) → K8s 클러스터
+```
 
-### 1. 사전 준비
+<br>
 
-#### 카카오 클라우드 설정
+### 🚀 배포 가이드
+
+#### 1. 사전 준비
+
+**카카오 클라우드 설정**
 1. [카카오 클라우드 콘솔](https://console.kakaocloud.com)에서 프로젝트 생성
 2. IAM > Application Credential 생성
 3. VPC > 네트워크 생성 (Public/Private 서브넷)
 4. Key Pair 생성
 
-#### 필수 도구 설치
+**필수 도구 설치**
 ```bash
-# Terraform 설치 (1.0 이상)
+# Terraform 설치
 brew install terraform
 
 # 또는 직접 다운로드
 wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
 ```
 
-### 2. 설정 파일 준비
+#### 2. 설정 파일 준비
 
 ```bash
 # 저장소 클론
@@ -48,7 +56,8 @@ cd PlayUs-terraform
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-#### terraform.tfvars 설정
+**terraform.tfvars 설정**
+
 ```hcl
 # 기본 설정
 # 기본 설정
@@ -79,7 +88,7 @@ alb_vip_port_id = "your-alb-vip-port-id"
 # prefix = "playus" 
 ```
 
-### 3. 인프라 배포
+#### 3. 인프라 배포
 
 ```bash
 # Terraform 초기화
@@ -92,16 +101,16 @@ terraform plan
 terraform apply
 ```
 
-### 4. 배포 완료 후 접속 정보
+#### 4. 배포 완료 후 접속 정보
 
 ```bash
 # 배포 완료 후 출력되는 정보
 terraform output
 ```
 
-## 🔐 접속 방법
+### 🔐 접속 방법
 
-### SSH 접속
+#### SSH 접속
 ```bash
 # Bastion 서버 직접 접속
 ssh ubuntu@<bastion-floating-ip>
@@ -119,7 +128,7 @@ ssh -p 10002 ubuntu@<bastion-floating-ip>
 ssh -p 10003 ubuntu@<bastion-floating-ip>
 ```
 
-### 웹 서비스 접속
+#### 웹 서비스 접속
 ```bash
 # React 웹 애플리케이션
 http://<alb-floating-ip>
@@ -128,9 +137,9 @@ http://<alb-floating-ip>
 http://<bastion-floating-ip>:81
 ```
 
-## 🛡️ 보안 그룹 구성
+### 🛡️ 보안 그룹 구성
 
-### Bastion Server (`playus-bastion-sg`)
+**Bastion Server (`playus-bastion-sg`)*
 
 | 방향       | 프로토콜/포트         | 출발지           | 설명                                      |
 |------------|------------------------|------------------|-------------------------------------------|
@@ -142,9 +151,7 @@ http://<bastion-floating-ip>:81
 | 인바운드   | ICMP                   | 0.0.0.0/0        | Ping 테스트 허용                          |
 | 아웃바운드 | All                    | 0.0.0.0/0        | 모든 외부 통신 허용                       |
 
----
-
-### Web Server (`playus-web-sg`)
+**Web Server (`playus-web-sg`)**
 
 | 방향       | 프로토콜/포트         | 출발지             | 설명                                       |
 |------------|------------------------|--------------------|--------------------------------------------|
@@ -153,9 +160,7 @@ http://<bastion-floating-ip>:81
 | 인바운드   | ICMP                   | Bastion, ALB, K8s SG | 네트워크 진단용 Ping 허용                 |
 | 아웃바운드 | All                    | 0.0.0.0/0          | 외부 API 호출 포함 모든 트래픽 허용       |
 
----
-
-### Application Load Balancer (`playus-alb-sg`)
+**Application Load Balancer (`playus-alb-sg`)**
 
 | 방향       | 프로토콜/포트         | 출발지    | 설명                                |
 |------------|------------------------|-----------|-------------------------------------|
@@ -164,9 +169,7 @@ http://<bastion-floating-ip>:81
 | 인바운드   | ICMP                   | 0.0.0.0/0 | 네트워크 상태 진단용 Ping 허용      |
 | 아웃바운드 | All                    | 0.0.0.0/0 | 백엔드 대상에 대한 모든 트래픽 허용 |
 
----
-
-### Kubernetes Cluster (`playus-k8s-sg`)
+**Kubernetes Cluster (`playus-k8s-sg`)**
 
 | 방향       | 프로토콜/포트         | 출발지             | 설명                                           |
 |------------|------------------------|--------------------|------------------------------------------------|
@@ -179,9 +182,7 @@ http://<bastion-floating-ip>:81
 
 > ❌ NodePort(30000–32767) 규칙은 현재 Terraform에 **포함되지 않음** — 필요 시 추가 가능
 
----
-
-### NAT Gateway (`playus-nat-sg`)
+**NAT Gateway (`playus-nat-sg`)**
 
 | 방향       | 프로토콜/포트         | 출발지              | 설명                                  |
 |------------|------------------------|---------------------|---------------------------------------|
@@ -189,9 +190,9 @@ http://<bastion-floating-ip>:81
 | 인바운드   | All                    | Private CIDR 대역   | 사설망 → NAT 경유 트래픽 허용        |
 | 아웃바운드 | All                    | 0.0.0.0/0           | NAT를 통한 외부 인터넷 통신 허용     |
 
-## 🔄 운영 가이드
+### 운영 가이드
 
-### 백업 및 복구
+**백업 및 복구**
 ```bash
 # 웹 서버 백업 확인
 ssh -p 10000 ubuntu@<bastion-ip> 'ls -la /var/www/backups/'
@@ -200,7 +201,7 @@ ssh -p 10000 ubuntu@<bastion-ip> 'ls -la /var/www/backups/'
 ssh -p 10000 ubuntu@<bastion-ip> 'sudo cp -r /var/www/backups/backup_YYYYMMDD_HHMMSS/* /var/www/html/'
 ```
 
-### 로그 확인
+**로그 확인**
 ```bash
 # 웹 서버 Nginx 로그
 ssh -p 10000 ubuntu@<bastion-ip> 'sudo tail -f /var/log/nginx/access.log'
@@ -209,9 +210,9 @@ ssh -p 10000 ubuntu@<bastion-ip> 'sudo tail -f /var/log/nginx/access.log'
 ssh -p 10000 ubuntu@<bastion-ip> 'sudo journalctl -f'
 ```
 
-## 🧹 정리
+### 🧹 정리
 
-### 인프라 삭제
+**인프라 삭제**
 ```bash
 # 모든 리소스 삭제
 terraform destroy
