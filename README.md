@@ -108,6 +108,8 @@ terraform apply
 terraform output
 ```
 
+<br>
+
 ### 🔐 접속 방법
 
 #### SSH 접속
@@ -136,6 +138,7 @@ http://<alb-floating-ip>
 # Bastion Nginx Proxy Manager (관리용)
 http://<bastion-floating-ip>:81
 ```
+<br>
 
 ### 🛡️ 보안 그룹 구성
 
@@ -180,7 +183,7 @@ http://<bastion-floating-ip>:81
 | 인바운드   | ICMP                   | Bastion, Web, K8s SG | 네트워크 상태 진단용 Ping 허용               |
 | 아웃바운드 | All                    | 0.0.0.0/0          | Pod, Kong, DNS 등 외부 통신 허용             |
 
-> ❌ NodePort(30000–32767) 규칙은 현재 Terraform에 **포함되지 않음** — 필요 시 추가 가능
+> NodePort(30000–32767) 규칙은 현재 Terraform에 **포함되지 않음** — 필요 시 추가 가능
 
 **NAT Gateway (`playus-nat-sg`)**
 
@@ -190,7 +193,9 @@ http://<bastion-floating-ip>:81
 | 인바운드   | All                    | Private CIDR 대역   | 사설망 → NAT 경유 트래픽 허용        |
 | 아웃바운드 | All                    | 0.0.0.0/0           | NAT를 통한 외부 인터넷 통신 허용     |
 
-### 운영 가이드
+<br>
+
+### ✅ 운영 가이드
 
 **백업 및 복구**
 ```bash
@@ -209,6 +214,8 @@ ssh -p 10000 ubuntu@<bastion-ip> 'sudo tail -f /var/log/nginx/access.log'
 # 시스템 로그
 ssh -p 10000 ubuntu@<bastion-ip> 'sudo journalctl -f'
 ```
+
+<br>
 
 ### 🧹 정리
 
