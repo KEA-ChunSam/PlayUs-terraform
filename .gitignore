@@ -61,9 +61,6 @@ terraform.rc
 # Ignore lock files
 .terraform.lock.hcl
 
-# Ignore Mac/OSX files
-.DS_Store
-
 # Ignore Windows files
 Thumbs.db
 ehthumbs.db
@@ -82,13 +79,5 @@ Desktop.ini
 *.bak
 *.backup
 
-# Ignore local environment files
-.env
-.env.local
-.env.*.local
-
-scripts/web-env.sh
-
-# 임시 파일입니다 무시해주세요
 .github/
 kakao-openrc.sh

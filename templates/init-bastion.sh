@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# =============================================================================
-# PlayUs Bastion 서버 초기화 스크립트
-# =============================================================================
+# Bastion 서버 초기화 스크립트
 
 # 로그 설정
 LOG_FILE="/var/log/bastion-init.log"
@@ -92,7 +90,7 @@ update_system() {
     log_info "필수 패키지 설치 중..."
     retry_command 3 5 "sudo apt-get install -y curl wget git htop vim nano unzip" || handle_error "필수 패키지 설치 실패"
     
-    log_info "✅ 시스템 업데이트 완료"
+    log_info "시스템 업데이트 완료"
 }
 
 # Docker 설치
@@ -102,7 +100,7 @@ install_docker() {
     # Docker가 이미 설치되어 있는지 확인
     if command -v docker &> /dev/null; then
         local docker_version=$(docker --version)
-        log_info "✅ Docker가 이미 설치되어 있습니다: $docker_version"
+        log_info "Docker가 이미 설치되어 있습니다: $docker_version"
         return 0
     fi
     
@@ -138,7 +136,7 @@ install_docker() {
     # 사용자를 docker 그룹에 추가
     sudo usermod -aG docker ubuntu || handle_error "사용자 docker 그룹 추가 실패"
     
-    log_info "✅ Docker 설치 완료"
+    log_info "Docker 설치 완료"
 }
 
 # Nginx Proxy Manager 설정
@@ -202,7 +200,7 @@ EOF
     log_info "컨테이너 상태:"
     sudo docker-compose ps
     
-    log_info "✅ Nginx Proxy Manager 설치 완료"
+    log_info "Nginx Proxy Manager 설치 완료"
     log_info "관리 페이지: http://$(curl -s ifconfig.me):81"
     log_info "기본 로그인: admin@example.com / changeme"
 }
@@ -229,13 +227,13 @@ setup_firewall() {
     # UFW 활성화
     sudo ufw --force enable
     
-    log_info "✅ 방화벽 설정 완료"
+    log_info "방화벽 설정 완료"
     sudo ufw status
 }
 
 # 메인 실행 함수
 main() {
-    log_info "🚀 PlayUs Bastion 서버 초기화 시작"
+    log_info "🚀 Bastion 서버 초기화 시작"
     
     print_system_info
     update_system
@@ -243,8 +241,8 @@ main() {
     setup_nginx_proxy_manager
     setup_firewall
     
-    log_info "✅ Bastion 서버 초기화 완료!"
-    log_info "📋 다음 단계:"
+    log_info "Bastion 서버 초기화 완료!"
+    log_info "다음 단계:"
     log_info "1. Nginx Proxy Manager 관리 페이지 접속: http://$(curl -s ifconfig.me):81"
     log_info "2. 기본 로그인: admin@example.com / changeme"
     log_info "3. 포트 포워딩 설정 진행"

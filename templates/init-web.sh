@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# 웹 서버 초기화 스크립트
+
 # 환경 변수 로드
 if [ -f /tmp/web-env ]; then
     source /tmp/web-env
@@ -16,7 +18,7 @@ handle_error() {
 }
 
 # 필수 패키지
-log "📦 필수 패키지 설치 중"
+log "필수 패키지 설치 중"
 sudo apt-get update
 sudo apt-get install -y nginx curl
 
@@ -34,11 +36,11 @@ sudo chmod 775 "$WEB_ROOT"
 
 # index.html 자동 복사
 if [ -f "$DEPLOY_DIR/public/index.html" ]; then
-    log "📄 index.html 복사 중"
+    log "index.html 복사 중"
     sudo cp "$DEPLOY_DIR/public/index.html" "$WEB_ROOT/index.html"
     sudo chown www-data:www-data "$WEB_ROOT/index.html"
 else
-    log "⚠️ index.html 파일이 $DEPLOY_DIR/public 에 없습니다. 수동 업로드 필요"
+    log "index.html 파일이 $DEPLOY_DIR/public 에 없습니다. 수동 업로드 필요"
 fi
 
 # Nginx 설정 생성
@@ -71,16 +73,16 @@ sudo mv /tmp/frontend.conf /etc/nginx/sites-available/frontend
 sudo ln -sf /etc/nginx/sites-available/frontend /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 
-log "🚀 Nginx 시작"
+log "Nginx 시작"
 sudo nginx -t || handle_error "Nginx 설정 오류"
 sudo systemctl enable nginx
 sudo systemctl restart nginx || handle_error "Nginx 시작 실패"
 
 # 헬스 체크
 if curl -sSf http://localhost > /dev/null; then
-    log "✅ Nginx 헬스 체크 성공"
+    log "Nginx 헬스 체크 성공"
 else
-    log "⚠️ Nginx는 실행 중이지만 응답이 없습니다 (index.html 누락 가능)"
+    log "Nginx는 실행 중이지만 응답이 없습니다 (index.html 누락 가능)"
 fi
 
-log "✅ 웹 서버 초기화 완료"
+log "웹 서버 초기화 완료"
