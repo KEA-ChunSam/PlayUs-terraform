@@ -13,10 +13,10 @@ environment = "dev"
 # 네트워크 설정 (카카오 클라우드 콘솔에서 확인)
 public_subnet_id = "your-public-subnet-id"
 public_subnet_network_id = "your-public-network-id"
-public_network_cidr = "10.10.0.0/20"
+public_network_cidr = "10.0.0.0/20"
 
 private_subnet_id = "your-private-subnet-id"
-private_network_cidr = "10.10.16.0/20"
+private_network_cidr = "10.0.16.0/20"
 router_id = "your-router-id"
 
 # ALB VIP 포트 ID

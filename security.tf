@@ -46,7 +46,7 @@ resource "openstack_networking_secgroup_rule_v2" "bastion_port_forwarding" {
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_min    = 10000
-  port_range_max    = 10003
+  port_range_max    = 10199
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.bastion_sg.id
   description       = "Port forwarding for internal servers (Web:10000, K8s Master:10001, K8s Slave1:10002, K8s Slave2:10003)"
@@ -192,15 +192,6 @@ resource "openstack_networking_secgroup_rule_v2" "alb_https" {
   description       = "HTTPS access to ALB"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "alb_icmp" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "icmp"
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.alb_sg.id
-  description       = "Allow ICMP for network diagnostics"
-}
-
 resource "openstack_networking_secgroup_rule_v2" "alb_egress" {
   for_each = { "all" = local.common_egress_rule }
   direction         = each.value.direction
@@ -288,16 +279,16 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_icmp" {
   ]
 }
 
-# Kong Ingress - HTTP 허용
-resource "openstack_networking_secgroup_rule_v2" "kong_http" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 80
-  port_range_max    = 80
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
-  description       = "Allow HTTP traffic to Kong Ingress"
+# Kong Ingress
+resource "openstack_networking_secgroup_rule_v2" "k8s_http_from_alb" {
+  direction                = "ingress"
+  ethertype                = "IPv4"
+  protocol                 = "tcp"
+  port_range_min           = 31874
+  port_range_max           = 31874
+  remote_group_id          = openstack_networking_secgroup_v2.alb_sg.id
+  security_group_id        = openstack_networking_secgroup_v2.k8s_sg.id
+  description              = "HTTP access from ALB"
 }
 
 resource "openstack_networking_secgroup_rule_v2" "k8s_internal" {
@@ -309,22 +300,6 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_internal" {
   remote_group_id   = openstack_networking_secgroup_v2.k8s_sg.id
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
   description       = "Allow internal k8s node communication"
-}
-
-resource "openstack_networking_secgroup_rule_v2" "k8s_api" {
-  for_each = {
-    "bastion" = openstack_networking_secgroup_v2.bastion_sg.id
-    "web"     = openstack_networking_secgroup_v2.web_sg.id
-  }
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 6443
-  port_range_max    = 6443
-  remote_group_id   = each.value
-  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
-  description       = "Allow k8s API access from ${each.key} server"
-  depends_on        = [openstack_networking_secgroup_v2.k8s_sg]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "k8s_egress" {

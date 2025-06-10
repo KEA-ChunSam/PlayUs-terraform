@@ -46,7 +46,7 @@ resource "openstack_compute_instance_v2" "web" {
   }
 }
 
-# NAT 게이트웨이 서버
+# NAT 인스턴스 서버
 resource "openstack_compute_instance_v2" "nat" {
   name        = "${var.prefix}-nat"
   image_id    = var.images.ubuntu_22_04.id  # Ubuntu 22.04
@@ -61,7 +61,7 @@ resource "openstack_compute_instance_v2" "nat" {
   block_device {
     uuid                  = var.images.ubuntu_22_04.id
     source_type          = "image"
-    volume_size          = 20  # NAT 게이트웨이용 기본 용량
+    volume_size          = 20
     boot_index           = 0
     destination_type     = "volume"
     delete_on_termination = true
@@ -83,7 +83,7 @@ resource "openstack_compute_instance_v2" "k8s_master" {
   block_device {
     uuid                  = var.images.ubuntu_22_04.id
     source_type          = "image"
-    volume_size          = 20  # K8s 마스터용 기본 용량
+    volume_size          = 20
     boot_index           = 0
     destination_type     = "volume"
     delete_on_termination = true
@@ -106,7 +106,7 @@ resource "openstack_compute_instance_v2" "k8s_slave" {
   block_device {
     uuid                  = var.images.ubuntu_22_04.id
     source_type          = "image"
-    volume_size          = 25  # K8s 워커용 적정 용량
+    volume_size          = 25
     boot_index           = 0
     destination_type     = "volume"
     delete_on_termination = true

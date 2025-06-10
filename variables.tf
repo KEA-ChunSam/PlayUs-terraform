@@ -1,4 +1,3 @@
-# 기본 설정
 variable "region" {
   description = "카카오 클라우드 리전"
   type        = string
@@ -115,7 +114,7 @@ variable "instance_types" {
     #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
     # }
     
-    # 최적화 설정 (개발환경용)
+    # 최적화 설정
     bastion = {
       name = "t1i.medium"
       id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM 
@@ -155,13 +154,6 @@ variable "images" {
     }
   }
 }
-
-# ALB VIP 포트 ID (보안을 위해 변수로 관리)
-# variable "alb_vip_port_id" {
-#   description = "ALB VIP 포트 ID"
-#   type        = string
-#   sensitive   = true
-# }
 
 variable "alb" {
   description = "ALB 설정"
