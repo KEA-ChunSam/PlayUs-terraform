@@ -26,11 +26,11 @@ resource "openstack_compute_instance_v2" "web" {
   image_id    = var.images.ubuntu_22_04.id  # Ubuntu 22.04
   flavor_id   = var.instance_types.web.id  # t1i.medium (2vCPU, 4GB RAM)
   key_pair    = var.ssh_key_name
-  user_data = join("\n", [
-    "#!/bin/bash",
-    local.web_env,
-    local.web_init
-  ])
+  user_data = <<-EOF
+    #!/bin/bash
+    ${local.web_env}
+    ${local.web_init}
+  EOF
 
   network {
     port = openstack_networking_port_v2.web_port.id
@@ -52,7 +52,7 @@ resource "openstack_compute_instance_v2" "nat" {
   image_id    = var.images.ubuntu_22_04.id  # Ubuntu 22.04
   flavor_id   = var.instance_types.nat.id  # t1i.micro (2vCPU, 1GB RAM)
   key_pair    = var.ssh_key_name
-  user_data   = file("${path.module}/templates/init-nat.sh")
+  user_data   = local.nat_init
 
   network {
     port = openstack_networking_port_v2.nat_port.id
@@ -74,7 +74,7 @@ resource "openstack_compute_instance_v2" "k8s_master" {
   image_id    = var.images.ubuntu_22_04.id  # Ubuntu 22.04
   flavor_id   = var.instance_types.k8s_master.id  # t1i.medium (2vCPU, 4GB RAM)
   key_pair    = var.ssh_key_name
-  user_data   = file("${path.module}/templates/init-k8s-master.sh")
+  user_data   = local.k8s_master_init
 
   network {
     port = openstack_networking_port_v2.k8s_master_port.id

@@ -2,11 +2,6 @@
 
 # 웹 서버 초기화 스크립트
 
-# 환경 변수 로드
-if [ -f /tmp/web-env ]; then
-    source /tmp/web-env
-fi
-
 # 로그 함수
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
@@ -16,6 +11,14 @@ handle_error() {
     log "ERROR: $1"
     exit 1
 }
+
+# 환경 변수 로드 (web-env.sh에서 이미 설정됨)
+if [ -f /tmp/web-env ]; then
+    source /tmp/web-env
+    log "환경 변수 로드 완료: ALB_VIP=$ALB_VIP, REACT_APP_API_URL=$REACT_APP_API_URL"
+else
+    log "WARNING: /tmp/web-env 파일이 없습니다. 기본값 사용"
+fi
 
 # 필수 패키지
 log "필수 패키지 설치 중"

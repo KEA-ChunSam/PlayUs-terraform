@@ -26,11 +26,12 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 log_warning "새로운 Kubernetes 클러스터를 설치합니다."
-read -p "계속하시겠습니까? (y/N): " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    exit 1
-fi
+# 자동화를 위해 사용자 입력 제거
+# read -p "계속하시겠습니까? (y/N): " -n 1 -r
+# echo
+# if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+#     exit 1
+# fi
 
 # ================================
 # 1. 설치 시작
