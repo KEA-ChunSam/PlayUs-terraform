@@ -19,8 +19,5 @@ private_subnet_id = "your-private-subnet-id"
 private_network_cidr = "10.0.16.0/20"
 router_id = "your-router-id"
 
-# ALB VIP 포트 ID
-alb_vip_port_id = "your-alb-vip-port-id"
-
-# 리소스 이름 접두사 (선택사항)
-# prefix = "playus" 
+## ALB VIP 포트 ID
+#alb_vip_port_id = "your-alb-vip-port-id"
