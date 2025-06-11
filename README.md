@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/1a5faef5-1c55-4f2b-8042-569816ae731f" width="80" alt="PlayUs Logo"/>
+  <img width="80" alt="Logo_REAL" src="https://github.com/user-attachments/assets/3dc13b9c-c793-44e9-9e02-713abeb15d2a" />
   <h1>PlayUs Terraform Infrastructure</h1>
   <p><em>Terraform으로 KakaoCloud 기반의 PlayUs 인프라를 자동화합니다</em></p>
   <p>
