@@ -25,7 +25,7 @@ if [ "$EUID" -ne 0 ]; then
     error_exit "root 권한으로 실행하세요: sudo $0"
 fi
 
-# 워커 노드 기본 설치 (join은 수동으로)
+# 워커 노드 기본 설치
 
 log_warning "새로운 Kubernetes 워커 노드를 설치합니다."
 # 자동화를 위해 사용자 입력 제거
@@ -35,15 +35,11 @@ log_warning "새로운 Kubernetes 워커 노드를 설치합니다."
 #     exit 1
 # fi
 
-# ================================
 # 1. 설치 시작
-# ================================
-log_info "새로운 Kubernetes 워커 노드 설치 시작..."
+log_info "새로운 Kubernetes 워커 노드 설치 시작"
 
-# ================================
 # 2. 시스템 준비
-# ================================
-log_info "시스템 업데이트 및 패키지 설치..."
+log_info "시스템 업데이트 및 패키지 설치"
 
 apt-get update -y
 apt-get upgrade -y
@@ -60,10 +56,8 @@ apt-get install -y \
     net-tools \
     htop
 
-# ================================
 # 3. Swap 및 시스템 설정
-# ================================
-log_info "시스템 설정 중..."
+log_info "시스템 설정 중"
 
 # Swap 비활성화
 swapoff -a
@@ -88,10 +82,8 @@ EOF
 
 sysctl --system
 
-# ================================
 # 4. containerd 설치 및 설정
-# ================================
-log_info "containerd 설치 및 설정..."
+log_info "containerd 설치 및 설정"
 
 # Docker 저장소 추가
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
@@ -105,18 +97,16 @@ apt-get install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
 
-# SystemdCgroup 활성화 (중요!)
+# SystemdCgroup 활성화
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
 systemctl restart containerd
 systemctl enable containerd
 
-# ================================
 # 5. Kubernetes 설치
-# ================================
 log_info "Kubernetes 패키지 설치..."
 
-# Kubernetes 저장소 추가 (최신 방식)
+# Kubernetes 저장소 추가
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' > /etc/apt/sources.list.d/kubernetes.list
@@ -127,9 +117,7 @@ apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 systemctl enable kubelet
 
-# ================================
 # 6. 설치 완료
-# ================================
 log_success "워커 노드 기본 설치 완료!"
 
 echo ""
