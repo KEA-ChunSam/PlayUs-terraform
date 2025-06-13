@@ -33,15 +33,11 @@ log_warning "새로운 Kubernetes 클러스터를 설치합니다."
 #     exit 1
 # fi
 
-# ================================
 # 1. 설치 시작
-# ================================
-log_info "새로운 Kubernetes 클러스터 설치 시작..."
+log_info "새로운 Kubernetes 클러스터 설치 시작"
 
-# ================================
 # 2. 시스템 준비
-# ================================
-log_info "시스템 업데이트 및 패키지 설치..."
+log_info "시스템 업데이트 및 패키지 설치"
 
 apt-get update -y
 apt-get upgrade -y
@@ -58,10 +54,8 @@ apt-get install -y \
     net-tools \
     htop
 
-# ================================
 # 3. Swap 및 시스템 설정
-# ================================
-log_info "시스템 설정 중..."
+log_info "시스템 설정 중"
 
 # Swap 비활성화
 swapoff -a
@@ -86,10 +80,8 @@ EOF
 
 sysctl --system
 
-# ================================
 # 4. containerd 설치 및 설정
-# ================================
-log_info "containerd 설치 및 설정..."
+log_info "containerd 설치 및 설정"
 
 # 기존 containerd 제거
 systemctl stop containerd 2>/dev/null || true
@@ -107,18 +99,16 @@ apt-get install -y containerd.io
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
 
-# SystemdCgroup 활성화 (중요!)
+# SystemdCgroup 활성화
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
 systemctl restart containerd
 systemctl enable containerd
 
-# ================================
 # 5. Kubernetes 설치
-# ================================
-log_info "Kubernetes 패키지 설치..."
+log_info "Kubernetes 패키지 설치"
 
-# Kubernetes 저장소 추가 (최신 방식)
+# Kubernetes 저장소 추가
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' > /etc/apt/sources.list.d/kubernetes.list
@@ -129,10 +119,8 @@ apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 systemctl enable kubelet
 
-# ================================
 # 6. 클러스터 초기화
-# ================================
-log_info "Kubernetes 클러스터 초기화..."
+log_info "Kubernetes 클러스터 초기화"
 
 # 마스터 IP 자동 감지
 MASTER_IP=$(ip route get 8.8.8.8 | awk '{print $7; exit}')
@@ -149,9 +137,7 @@ kubeadm init \
     --cri-socket=unix:///var/run/containerd/containerd.sock \
     --ignore-preflight-errors=all
 
-# ================================
 # 7. kubectl 설정
-# ================================
 log_info "kubectl 설정..."
 
 # root 사용자
@@ -166,10 +152,8 @@ if [ -n "$SUDO_USER" ]; then
     chown $SUDO_USER:$SUDO_USER /home/$SUDO_USER/.kube/config
 fi
 
-# ================================
 # 8. Calico 설치 (BGP 비활성화)
-# ================================
-log_info "Calico CNI 설치 (BGP 비활성화 모드)..."
+log_info "Calico CNI 설치 (BGP 비활성화 모드)"
 
 # Calico Operator 설치
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/tigera-operator.yaml
@@ -201,10 +185,8 @@ EOF
 
 log_info "Calico 설치 완료. BGP는 비활성화되고 VXLAN 모드로 설정되었습니다."
 
-# ================================
 # 9. Helm 설치
-# ================================
-log_info "Helm 설치..."
+log_info "Helm 설치"
 
 curl https://baltocdn.com/helm/signing.asc | gpg --dearmor > /usr/share/keyrings/helm.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" > /etc/apt/sources.list.d/helm-stable-debian.list
@@ -212,10 +194,8 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.
 apt-get update -y
 apt-get install -y helm
 
-# ================================
 # 10. 클러스터 상태 확인
-# ================================
-log_info "클러스터 준비 상태 확인 중..."
+log_info "클러스터 준비 상태 확인 중"
 
 echo "Calico 파드가 준비될 때까지 대기 중... (최대 5분)"
 for i in {1..30}; do
@@ -227,9 +207,7 @@ for i in {1..30}; do
     sleep 10
 done
 
-# ================================
 # 11. 결과 출력
-# ================================
 log_success "Kubernetes 클러스터 설치 완료!"
 
 echo ""
