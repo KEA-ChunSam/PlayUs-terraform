@@ -27,6 +27,11 @@ resource "openstack_networking_floatingip_v2" "bastion_fip" {
   pool = data.openstack_networking_network_v2.floating_network.name
 }
 
+# NAT용 Floating IP 생성
+resource "openstack_networking_floatingip_v2" "nat_fip" {
+  pool = data.openstack_networking_network_v2.floating_network.name
+}
+
 # Bastion 서버 포트 생성 
 resource "openstack_networking_port_v2" "bastion_port" {
   name           = "${var.prefix}-bastion-port"
@@ -42,13 +47,6 @@ resource "openstack_networking_port_v2" "bastion_port" {
   }
 }
 
-# Bastion Floating IP 연결
-resource "openstack_networking_floatingip_associate_v2" "bastion_fip_assoc" {
-  floating_ip = openstack_networking_floatingip_v2.bastion_fip.address
-  port_id     = openstack_networking_port_v2.bastion_port.id
-  depends_on  = [var.bastion_instance_id]
-}
-
 # NAT용 포트 생성
 resource "openstack_networking_port_v2" "nat_port" {
   name           = "${var.prefix}-nat-port"
@@ -60,18 +58,6 @@ resource "openstack_networking_port_v2" "nat_port" {
   }
 
   security_group_ids = [var.nat_security_group_id]
-}
-
-# NAT용 Floating IP 생성
-resource "openstack_networking_floatingip_v2" "nat_fip" {
-  pool = data.openstack_networking_network_v2.floating_network.name
-}
-
-# NAT Floating IP 연결
-resource "openstack_networking_floatingip_associate_v2" "nat_fip_assoc" {
-  floating_ip = openstack_networking_floatingip_v2.nat_fip.address
-  port_id     = openstack_networking_port_v2.nat_port.id
-  depends_on  = [var.nat_instance_id]
 }
 
 resource "openstack_networking_port_v2" "web_port" {
@@ -105,24 +91,5 @@ resource "openstack_networking_port_v2" "k8s_worker_port" {
 
   fixed_ip {
     subnet_id = var.private_subnet_id
-  }
-}
-
-# 주의: 이미 라우터에 라우트가 설정되어 있는 경우 충돌이 발생할 수 있습니다.
-# 이 경우 terraform import를 사용하세요.
-resource "openstack_networking_router_route_v2" "private_route" {
-  router_id        = var.private_subnet_router_id
-  destination_cidr = "0.0.0.0/0"
-  next_hop         = var.nat_instance_private_ip
-  depends_on = [
-    var.nat_instance_id,
-    openstack_networking_floatingip_associate_v2.nat_fip_assoc
-  ]
-
-  lifecycle {
-    # 라우터 라우트가 이미 존재하는 경우 충돌 방지
-    ignore_changes = [
-      next_hop
-    ]
   }
 }
