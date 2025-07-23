@@ -90,6 +90,7 @@ resource "openstack_networking_port_v2" "k8s_master_port" {
   network_id         = data.openstack_networking_subnet_v2.private_subnet.network_id
   admin_state_up     = true
   security_group_ids = [var.k8s_security_group_id]
+
   fixed_ip {
     subnet_id = var.private_subnet_id
   }
@@ -97,10 +98,11 @@ resource "openstack_networking_port_v2" "k8s_master_port" {
 
 resource "openstack_networking_port_v2" "k8s_worker_port" {
   count              = 2
-  name               = "${var.prefix}-k8s-slave-port-${count.index + 1}"
+  name               = "${var.prefix}-k8s-worker-port-${count.index + 1}"
   network_id         = data.openstack_networking_subnet_v2.private_subnet.network_id
   admin_state_up     = true
   security_group_ids = [var.k8s_security_group_id]
+
   fixed_ip {
     subnet_id = var.private_subnet_id
   }
