@@ -1,48 +1,81 @@
+# Bastion 서버 정보
 output "bastion_floating_ip" {
-  value = openstack_networking_floatingip_v2.bastion_fip.address
+  description = "Bastion 서버 Floating IP"
+  value       = module.network.bastion_floating_ip
 }
 
+output "bastion_instance_id" {
+  description = "Bastion 인스턴스 ID"
+  value       = module.compute.bastion_instance_id
+}
+
+# NAT 서버 정보
 output "nat_floating_ip" {
-  value = openstack_networking_floatingip_v2.nat_fip.address
+  description = "NAT 서버 Floating IP"
+  value       = module.network.nat_floating_ip
 }
 
-output "web_server_private_ip" {
-  value = openstack_networking_port_v2.web_port.all_fixed_ips[0]
+output "nat_instance_id" {
+  description = "NAT 인스턴스 ID"
+  value       = module.compute.nat_instance_id
 }
 
-output "web_private_ip" {
-  value = openstack_networking_port_v2.web_port.all_fixed_ips[0]
+# Web 서버 정보
+output "web_instance_id" {
+  description = "Web 인스턴스 ID"
+  value       = module.compute.web_instance_id
 }
 
+# Kubernetes 정보
+output "k8s_master_instance_id" {
+  description = "Kubernetes Master 인스턴스 ID"
+  value       = module.compute.k8s_master_instance_id
+}
+
+output "k8s_worker_instance_ids" {
+  description = "Kubernetes Worker 인스턴스 ID list"
+  value       = module.compute.k8s_worker_instance_ids
+}
+
+# ALB 정보
 output "alb_floating_ip" {
-  value = openstack_networking_floatingip_v2.alb_fip.address
+  description = "ALB Floating IP"
+  value       = module.alb.alb_floating_ip
 }
 
-output "alb_vip_address" {
-  description = "ALB VIP 주소"
-  value       = openstack_lb_loadbalancer_v2.alb.vip_address
-}
-
-output "alb_id" {
+output "alb_loadbalancer_id" {
   description = "ALB ID"
-  value       = openstack_lb_loadbalancer_v2.alb.id
+  value       = module.alb.alb_loadbalancer_id
 }
 
-output "k8s_master_private_ip" {
-  value = openstack_networking_port_v2.k8s_master_port.all_fixed_ips[0]
+# Storage 정보
+output "s3_bucket_name" {
+  description = "S3 버킷 이름"
+  value       = module.storage.s3_bucket_name
 }
 
-output "k8s_slave_private_ips" {
-  value = [for p in openstack_networking_port_v2.k8s_slave_port : p.all_fixed_ips[0]]
+# 보안 그룹 정보
+output "bastion_security_group_id" {
+  description = "Bastion 보안 그룹 ID"
+  value       = module.security.bastion_security_group_id
 }
 
-# 접속 정보
-output "access_info" {
-  description = "서비스 접속 정보"
-  value = {
-    web_app        = "http://${openstack_networking_floatingip_v2.alb_fip.address}"
-    bastion_ssh    = "ssh ubuntu@${openstack_networking_floatingip_v2.bastion_fip.address}"
-    web_ssh        = "ssh -p 10000 ubuntu@${openstack_networking_floatingip_v2.bastion_fip.address}"
-    k8s_master_ssh = "ssh -p 10001 ubuntu@${openstack_networking_floatingip_v2.bastion_fip.address}"
-  }
+output "web_security_group_id" {
+  description = "Web 보안 그룹 ID"
+  value       = module.security.web_security_group_id
+}
+
+output "alb_security_group_id" {
+  description = "ALB 보안 그룹 ID"
+  value       = module.security.alb_security_group_id
+}
+
+output "nat_security_group_id" {
+  description = "NAT 보안 그룹 ID"
+  value       = module.security.nat_security_group_id
+}
+
+output "k8s_security_group_id" {
+  description = "Kubernetes 보안 그룹 ID"
+  value       = module.security.k8s_security_group_id
 }
