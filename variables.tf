@@ -1,5 +1,5 @@
 variable "region" {
-  description = "카카오 클라우드 리전"
+  description = "카카오클라우드 리전"
   type        = string
 }
 
@@ -8,12 +8,12 @@ variable "auth_url" {
   type        = string
 }
 
-variable "application_credential_id" {
+variable "credential_id" {
   description = "IAM Application Credential ID"
   type        = string
 }
 
-variable "application_credential_secret" {
+variable "credential_secret" {
   description = "IAM Application Credential Secret"
   type        = string
 }
@@ -30,18 +30,18 @@ variable "environment" {
 }
 
 # 네트워크 설정
+variable "public_network_id" {
+  description = "퍼블릭 네트워크 ID"
+  type        = string
+}
+
 variable "public_subnet_id" {
   description = "퍼블릭 서브넷 ID"
   type        = string
 }
 
-variable "public_subnet_network_id" {
-  description = "퍼블릭 서브넷이 속한 네트워크 ID"
-  type        = string
-}
-
-variable "public_network_cidr" {
-  description = "퍼블릭 네트워크 CIDR"
+variable "public_subnet_cidr" {
+  description = "퍼블릭 서브넷 CIDR"
   type        = string
 }
 
@@ -50,13 +50,13 @@ variable "private_subnet_id" {
   type        = string
 }
 
-variable "private_network_cidr" {
-  description = "프라이빗 네트워크 CIDR"
+variable "private_subnet_cidr" {
+  description = "프라이빗 서브넷 CIDR"
   type        = string
 }
 
-variable "router_id" {
-  description = "라우터 ID"
+variable "private_subnet_router_id" {
+  description = "프라이빗 서브넷 라우터 ID"
   type        = string
 }
 
@@ -142,13 +142,13 @@ variable "instance_types" {
 variable "images" {
   description = "OS 이미지 설정"
   type = object({
-    ubuntu_22_04 = object({
+    ubuntu = object({
       name = string
       id   = string
     })
   })
   default = {
-    ubuntu_22_04 = {
+    ubuntu = {
       name = "Ubuntu 22.04"
       id   = "07b05fb9-e0e4-4713-b699-5a492ebc7890"
     }
