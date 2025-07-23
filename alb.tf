@@ -5,7 +5,7 @@ resource "openstack_lb_loadbalancer_v2" "alb" {
   admin_state_up    = true
   availability_zone = "kr-central-2-a"
   flavor_id         = var.alb.flavor_id
-  
+
   timeouts {
     create = "90m"
   }
@@ -64,7 +64,7 @@ resource "openstack_lb_member_v2" "web" {
   address       = openstack_networking_port_v2.web_port.all_fixed_ips[0]
   protocol_port = 80
   subnet_id     = var.private_subnet_id
-  
+
   timeouts {
     create = "60m"
     update = "60m"

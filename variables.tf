@@ -113,27 +113,27 @@ variable "instance_types" {
     #   name = "t1i.medium"
     #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
     # }
-    
+
     # 최적화 설정
     bastion = {
       name = "t1i.medium"
-      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM 
+      id   = "1a225644-8411-4277-b44a-00487d575620" # 2vCPU, 4GB RAM 
     }
     nat = {
       name = "t1i.micro"
-      id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM 
+      id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829" # 2vCPU, 1GB RAM 
     }
     web = {
       name = "t1i.medium"
-      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
+      id   = "1a225644-8411-4277-b44a-00487d575620" # 2vCPU, 4GB RAM
     }
     k8s_master = {
       name = "t1i.medium"
-      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM 
+      id   = "1a225644-8411-4277-b44a-00487d575620" # 2vCPU, 4GB RAM 
     }
     k8s_slave = {
       name = "t1i.medium"
-      id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM 
+      id   = "1a225644-8411-4277-b44a-00487d575620" # 2vCPU, 4GB RAM 
     }
   }
 }
@@ -158,24 +158,24 @@ variable "images" {
 variable "alb" {
   description = "ALB 설정"
   type = object({
-    flavor_id = string
+    flavor_id     = string
     listener_port = number
     health_check = object({
-      delay = number
-      timeout = number
-      max_retries = number
-      url_path = string
+      delay          = number
+      timeout        = number
+      max_retries    = number
+      url_path       = string
       expected_codes = string
     })
   })
   default = {
-    flavor_id = "687c7076-7756-4906-9630-dd51abd6f1e7"
-    listener_port = 80 
+    flavor_id     = "687c7076-7756-4906-9630-dd51abd6f1e7"
+    listener_port = 80
     health_check = {
-      delay = 10
-      timeout = 3
-      max_retries = 3
-      url_path = "/"
+      delay          = 10
+      timeout        = 3
+      max_retries    = 3
+      url_path       = "/"
       expected_codes = "200"
     }
   }

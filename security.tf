@@ -1,10 +1,10 @@
 # 공통 보안 그룹 규칙
 locals {
   common_egress_rule = {
-    direction         = "egress"
-    ethertype         = "IPv4"
-    protocol          = null
-    remote_ip_prefix  = "0.0.0.0/0"
+    direction        = "egress"
+    ethertype        = "IPv4"
+    protocol         = null
+    remote_ip_prefix = "0.0.0.0/0"
   }
 
   common_tags = {
@@ -103,14 +103,14 @@ resource "openstack_networking_secgroup_v2" "web_sg" {
 
 # 웹 서버 보안 그룹 규칙
 resource "openstack_networking_secgroup_rule_v2" "web_ssh_from_bastion" {
-  direction                = "ingress"
-  ethertype                = "IPv4"
-  protocol                 = "tcp"
-  port_range_min           = 22
-  port_range_max           = 22
-  remote_group_id          = openstack_networking_secgroup_v2.bastion_sg.id
-  security_group_id        = openstack_networking_secgroup_v2.web_sg.id
-  description              = "SSH access from bastion"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 22
+  port_range_max    = 22
+  remote_group_id   = openstack_networking_secgroup_v2.bastion_sg.id
+  security_group_id = openstack_networking_secgroup_v2.web_sg.id
+  description       = "SSH access from bastion"
 }
 
 resource "openstack_networking_secgroup_rule_v2" "web_icmp" {
@@ -125,21 +125,21 @@ resource "openstack_networking_secgroup_rule_v2" "web_icmp" {
   remote_group_id   = each.value
   security_group_id = openstack_networking_secgroup_v2.web_sg.id
   description       = "Allow ICMP for network diagnostics from ${each.key}"
-  depends_on        = [
+  depends_on = [
     openstack_networking_secgroup_v2.web_sg,
     openstack_networking_secgroup_v2.k8s_sg
   ]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "web_http_from_alb" {
-  direction                = "ingress"
-  ethertype                = "IPv4"
-  protocol                 = "tcp"
-  port_range_min           = 80
-  port_range_max           = 80
-  remote_group_id          = openstack_networking_secgroup_v2.alb_sg.id
-  security_group_id        = openstack_networking_secgroup_v2.web_sg.id
-  description              = "HTTP access from ALB"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_group_id   = openstack_networking_secgroup_v2.alb_sg.id
+  security_group_id = openstack_networking_secgroup_v2.web_sg.id
+  description       = "HTTP access from ALB"
 }
 
 # resource "openstack_networking_secgroup_rule_v2" "web_k8s_api" {
@@ -154,7 +154,7 @@ resource "openstack_networking_secgroup_rule_v2" "web_http_from_alb" {
 # }
 
 resource "openstack_networking_secgroup_rule_v2" "web_egress" {
-  for_each = { "all" = local.common_egress_rule }
+  for_each          = { "all" = local.common_egress_rule }
   direction         = each.value.direction
   ethertype         = each.value.ethertype
   protocol          = each.value.protocol
@@ -193,7 +193,7 @@ resource "openstack_networking_secgroup_rule_v2" "alb_https" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "alb_egress" {
-  for_each = { "all" = local.common_egress_rule }
+  for_each          = { "all" = local.common_egress_rule }
   direction         = each.value.direction
   ethertype         = each.value.ethertype
   protocol          = each.value.protocol
@@ -210,14 +210,14 @@ resource "openstack_networking_secgroup_v2" "nat_sg" {
 
 # NAT 보안 그룹 규칙
 resource "openstack_networking_secgroup_rule_v2" "nat_ssh_from_bastion" {
-  direction                = "ingress"
-  ethertype                = "IPv4"
-  protocol                 = "tcp"
-  port_range_min           = 22
-  port_range_max           = 22
-  remote_group_id          = openstack_networking_secgroup_v2.bastion_sg.id
-  security_group_id        = openstack_networking_secgroup_v2.nat_sg.id
-  description              = "SSH access from bastion"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 22
+  port_range_max    = 22
+  remote_group_id   = openstack_networking_secgroup_v2.bastion_sg.id
+  security_group_id = openstack_networking_secgroup_v2.nat_sg.id
+  description       = "SSH access from bastion"
 }
 
 resource "openstack_networking_secgroup_rule_v2" "nat_internal" {
@@ -230,7 +230,7 @@ resource "openstack_networking_secgroup_rule_v2" "nat_internal" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "nat_egress" {
-  for_each = { "all" = local.common_egress_rule }
+  for_each          = { "all" = local.common_egress_rule }
   direction         = each.value.direction
   ethertype         = each.value.ethertype
   protocol          = each.value.protocol
@@ -243,7 +243,7 @@ resource "openstack_networking_secgroup_rule_v2" "nat_egress" {
 resource "openstack_networking_secgroup_v2" "k8s_sg" {
   name        = "${var.prefix}-k8s-sg"
   description = "Security group for Kubernetes nodes"
-  depends_on  = [
+  depends_on = [
     openstack_networking_secgroup_v2.bastion_sg,
     openstack_networking_secgroup_v2.web_sg
   ]
@@ -273,7 +273,7 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_icmp" {
   remote_group_id   = each.value
   security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
   description       = "Allow ICMP for network diagnostics from ${each.key}"
-  depends_on        = [
+  depends_on = [
     openstack_networking_secgroup_v2.k8s_sg,
     openstack_networking_secgroup_v2.web_sg
   ]
@@ -281,14 +281,14 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_icmp" {
 
 # Kong Ingress
 resource "openstack_networking_secgroup_rule_v2" "k8s_http_from_alb" {
-  direction                = "ingress"
-  ethertype                = "IPv4"
-  protocol                 = "tcp"
-  port_range_min           = 31874
-  port_range_max           = 31874
-  remote_group_id          = openstack_networking_secgroup_v2.alb_sg.id
-  security_group_id        = openstack_networking_secgroup_v2.k8s_sg.id
-  description              = "HTTP access from ALB"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 31874
+  port_range_max    = 31874
+  remote_group_id   = openstack_networking_secgroup_v2.alb_sg.id
+  security_group_id = openstack_networking_secgroup_v2.k8s_sg.id
+  description       = "HTTP access from ALB"
 }
 
 resource "openstack_networking_secgroup_rule_v2" "k8s_internal" {
@@ -303,7 +303,7 @@ resource "openstack_networking_secgroup_rule_v2" "k8s_internal" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "k8s_egress" {
-  for_each = { "all" = local.common_egress_rule }
+  for_each          = { "all" = local.common_egress_rule }
   direction         = each.value.direction
   ethertype         = each.value.ethertype
   protocol          = each.value.protocol

@@ -1,6 +1,6 @@
 # public subnet 정보 조회 
 data "openstack_networking_subnet_v2" "public_subnet" {
-  subnet_id = var.public_subnet_id 
+  subnet_id = var.public_subnet_id
 }
 
 # private subnet 정보 조회
@@ -103,7 +103,7 @@ resource "openstack_networking_router_route_v2" "private_route" {
   router_id        = var.router_id
   destination_cidr = "0.0.0.0/0"
   next_hop         = openstack_compute_instance_v2.nat.network[0].fixed_ip_v4
-  depends_on       = [
+  depends_on = [
     openstack_compute_instance_v2.nat,
     openstack_networking_floatingip_associate_v2.nat_fip_assoc
   ]

@@ -9,8 +9,8 @@ terraform {
 }
 
 provider "openstack" {
-  auth_url                    = var.auth_url
-  application_credential_id   = var.application_credential_id
+  auth_url                      = var.auth_url
+  application_credential_id     = var.application_credential_id
   application_credential_secret = var.application_credential_secret
-  region                      = var.region
+  region                        = var.region
 }
