@@ -1,23 +1,20 @@
 # 기본 설정
-region  = "kr-central-2"
+region   = "kr-central-2"
 auth_url = "https://iam.kakaocloud.com/identity/v3"
 
 # 카카오 클라우드 IAM Application Credential
-credential_id = "your-application-credential-id"
+credential_id     = "your-application-credential-id"
 credential_secret = "your-application-credential-secret"
 
 # SSH 키페어 이름
 ssh_key_name = "your-ssh-key-name"
-environment = "dev"
+environment  = "dev"
 
 # 네트워크 설정
 public_network_id = "your-public-network-id"
-public_subnet_id = "your-public-subnet-id"
-public_subnet_cidr = "10.0.0.0/20"
+public_subnet_id  = "your-public-subnet-id"
+public_subnet_cidr = "10.10.0.0/20"
 
 private_subnet_id = "your-private-subnet-id"
-private_subnet_cidr = "10.0.16.0/20"
+private_subnet_cidr = "10.10.16.0/20"
 private_subnet_router_id = "your-router-id"
-
-## ALB VIP 포트 ID
-#alb_vip_port_id = "your-alb-vip-port-id"
