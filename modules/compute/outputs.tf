@@ -23,7 +23,7 @@ output "k8s_master_instance_id" {
   value       = openstack_compute_instance_v2.k8s_master.id
 }
 
-output "k8s_slave_instance_ids" {
-  description = "K8s Slave 인스턴스 ID list"
-  value       = openstack_compute_instance_v2.k8s_slave[*].id
+output "k8s_worker_instance_ids" {
+  description = "K8s Worker 인스턴스 ID list"
+  value       = openstack_compute_instance_v2.k8s_worker[*].id
 }

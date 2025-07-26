@@ -92,15 +92,15 @@ resource "openstack_compute_instance_v2" "k8s_master" {
 }
 
 # Kubernetes 워커 노드
-resource "openstack_compute_instance_v2" "k8s_slave" {
+resource "openstack_compute_instance_v2" "k8s_worker" {
   count     = 2
-  name      = "${var.prefix}-k8s-slave-${count.index + 1}"
+  name      = "${var.prefix}-k8s-worker-${count.index + 1}"
   image_id  = var.images.ubuntu.id
-  flavor_id = var.instance_types.k8s_slave.id
+  flavor_id = var.instance_types.k8s_worker.id
   key_pair  = var.ssh_key_name
 
   network {
-    port = var.k8s_slave_port_ids[count.index]
+    port = var.k8s_worker_port_ids[count.index]
   }
 
   block_device {
