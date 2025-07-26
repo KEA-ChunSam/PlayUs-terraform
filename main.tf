@@ -16,9 +16,9 @@ module "security" {
 module "network" {
   source = "./modules/network"
 
-  prefix                    = var.prefix
-  public_subnet_id          = var.public_subnet_id
-  private_subnet_id         = var.private_subnet_id
+  prefix            = var.prefix
+  public_subnet_id  = var.public_subnet_id
+  private_subnet_id = var.private_subnet_id
 
   bastion_security_group_id = module.security.bastion_security_group_id
   nat_security_group_id     = module.security.nat_security_group_id
@@ -32,15 +32,16 @@ module "network" {
 module "compute" {
   source = "./modules/compute"
 
-  prefix             = var.prefix
-  ssh_key_name       = var.ssh_key_name
-  images             = var.images
-  instance_types     = var.instance_types
-  bastion_port_id    = module.network.bastion_port_id
-  web_port_id        = module.network.web_port_id
-  nat_port_id        = module.network.nat_port_id
-  k8s_master_port_id = module.network.k8s_master_port_id
-  k8s_slave_port_ids = module.network.k8s_slave_port_ids
+  prefix         = var.prefix
+  ssh_key_name   = var.ssh_key_name
+  images         = var.images
+  instance_types = var.instance_types
+
+  bastion_port_id     = module.network.bastion_port_id
+  web_port_id         = module.network.web_port_id
+  nat_port_id         = module.network.nat_port_id
+  k8s_master_port_id  = module.network.k8s_master_port_id
+  k8s_worker_port_ids = module.network.k8s_worker_port_ids
 
   depends_on = [module.network]
 }
