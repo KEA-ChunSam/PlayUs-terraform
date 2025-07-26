@@ -70,50 +70,13 @@ variable "prefix" {
 variable "instance_types" {
   description = "인스턴스 타입 설정"
   type = object({
-    bastion = object({
-      name = string
-      id   = string
-    })
-    nat = object({
-      name = string
-      id   = string
-    })
-    web = object({
-      name = string
-      id   = string
-    })
-    k8s_master = object({
-      name = string
-      id   = string
-    })
-    k8s_slave = object({
-      name = string
-      id   = string
-    })
+    bastion    = object({ id = string })
+    web        = object({ id = string })
+    nat        = object({ id = string })
+    k8s_master = object({ id = string })
+    k8s_worker = object({ id = string })
   })
   default = {
-    # 기존 설정 (주석 처리)
-    # bastion = {
-    #   name = "t1i.medium"
-    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
-    # }
-    # nat = {
-    #   name = "t1i.micro"
-    #   id   = "8adaa6de-c42a-40b8-bc55-3cb36d8d8829"  # 2vCPU, 1GB RAM
-    # }
-    # web = {
-    #   name = "t1i.medium"
-    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
-    # }
-    # k8s_master = {
-    #   name = "t1i.medium"
-    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
-    # }
-    # k8s_slave = {
-    #   name = "t1i.medium"
-    #   id   = "1a225644-8411-4277-b44a-00487d575620"  # 2vCPU, 4GB RAM
-    # }
-
     # 최적화 설정
     bastion = {
       name = "t1i.medium"
@@ -131,7 +94,7 @@ variable "instance_types" {
       name = "t1i.medium"
       id   = "1a225644-8411-4277-b44a-00487d575620" # 2vCPU, 4GB RAM 
     }
-    k8s_slave = {
+    k8s_worker = {
       name = "t1i.medium"
       id   = "1a225644-8411-4277-b44a-00487d575620" # 2vCPU, 4GB RAM 
     }
