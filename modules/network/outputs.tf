@@ -23,14 +23,29 @@ output "web_port_id" {
   value       = openstack_networking_port_v2.web_port.id
 }
 
+output "web_port_private_ip" {
+  description = "Web 포트 Private IP"
+  value       = openstack_networking_port_v2.web_port.all_fixed_ips[0]
+}
+
 output "k8s_master_port_id" {
   description = "K8s Master 포트 ID"
   value       = openstack_networking_port_v2.k8s_master_port.id
 }
 
+output "k8s_master_port_private_ip" {
+  description = "K8s Master 포트 Private IP"
+  value       = openstack_networking_port_v2.k8s_master_port.all_fixed_ips[0]
+}
+
 output "k8s_worker_port_ids" {
   description = "K8s Worker 포트 ID list"
   value       = openstack_networking_port_v2.k8s_worker_port[*].id
+}
+
+output "k8s_worker_port_private_ips" {
+  description = "K8s Worker 포트 Private IP list"
+  value       = openstack_networking_port_v2.k8s_worker_port[*].all_fixed_ips[0]
 }
 
 output "floating_network_name" {
